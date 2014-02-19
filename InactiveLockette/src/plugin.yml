@@ -1,0 +1,27 @@
+main: gvlfm78.plugin.InactiveLockette.InactiveLockette
+name: InactiveLockette
+version: 2.03
+author: gvlfm78
+description: Allows opening of lockette locks after a set amount of time.
+
+depend: [Lockette]
+softdepend: [Vault]
+
+commands:
+  InactiveLockette:
+    description: InactiveLockette's main command
+    aliases: il
+
+permissions:
+  inactivelockette.*:
+    description: Gives access to all inactivelockette permissions
+    default: op
+  children:
+    inactivelockette.admin: true
+    inactivelockette.player: true
+  inactivelockette.admin:
+    description: Allows use of the /inactivelockette command
+    default: op
+  inactivelockette.player:
+    description: Allows players to open inactive locks
+    default: true
