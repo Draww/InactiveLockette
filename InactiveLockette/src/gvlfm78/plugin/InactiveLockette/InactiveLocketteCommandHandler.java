@@ -45,7 +45,7 @@ public class InactiveLocketteCommandHandler implements CommandExecutor {
                     onHelp(sender, commandLabel, args);
                 return false;
             }
-            onHelp(sender, commandLabel, args);
+            sender.sendMessage(ChatColor.DARK_RED + plugin.getConfig().getString("onCommand.messageNoPermission"));
             return false;
         }
         return false;

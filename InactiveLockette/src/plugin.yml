@@ -1,6 +1,6 @@
 main: gvlfm78.plugin.InactiveLockette.InactiveLockette
 name: InactiveLockette
-version: 2.03
+version: 2.04
 author: gvlfm78
 description: Allows opening of lockette locks after a set amount of time.
 
@@ -24,4 +24,4 @@ permissions:
     default: op
   inactivelockette.player:
     description: Allows players to open inactive locks
-    default: true
+    default: op

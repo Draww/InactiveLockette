@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.bukkit.block.Block;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -15,9 +16,21 @@ public class InactiveLockette extends JavaPlugin {
     private static final Logger log = Logger.getLogger("Minecraft"); //Creating a logger
     public static Economy econ = null; //Creating economy variable
     InactiveLocketteConfigHandler ilch = InactiveLocketteConfigHandler.getInstance(); //Getting the instance of the Config Handler
+    private Block signBlock = null;
+
+    protected UpdateChecker updateChecker;
 
     @Override
     public void onEnable(){
+
+        this.updateChecker = new UpdateChecker(this, "http://dev.bukkit.org/bukkit-plugins/inactivelockette2/files.rss");
+        this.updateChecker.updateNeeded();
+
+        if(this.updateChecker.updateNeeded()&&getConfig().getBoolean("settings.checkForUpdates")){
+            this.log.info(getConfig().getString("onPluginLoad.updateAvailable")+" "+this.updateChecker.getVersion());
+            this.log.info(getConfig().getString("onPluginLoad.updateAvailableLink")+" "+this.updateChecker.getLink());
+        }
+
 
         if (!new File(getDataFolder(), "config.yml").exists()) { //Checking if config file exists
             ilch.setupConfig(this);//Creates config file
