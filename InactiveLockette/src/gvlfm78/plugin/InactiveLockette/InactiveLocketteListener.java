@@ -8,21 +8,7 @@ import org.bukkit.Location;
 
 import org.bukkit.Material;
 
-import org.bukkit.block.Block;
-
-import org.bukkit.block.BlockFace;
-
-import org.bukkit.block.Chest;
-
-import org.bukkit.block.Dispenser;
-
-import org.bukkit.block.Dropper;
-
-import org.bukkit.block.Furnace;
-
-import org.bukkit.block.Hopper;
-
-import org.bukkit.block.Sign;
+import org.bukkit.block.*;
 
 import org.bukkit.entity.Player;
 
@@ -37,6 +23,7 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.material.Attachable;
 
+import java.util.UUID;
 import java.util.logging.Level;
 
 public class InactiveLocketteListener implements Listener {
@@ -60,38 +47,28 @@ public class InactiveLocketteListener implements Listener {
     }
     }
 
-    private String playerOnSign(PlayerInteractEvent event){
+    private UUID playerOnSign(PlayerInteractEvent event){
 
         Block block = event.getClickedBlock(); //Getting the block the player clicked
         Sign sign = (Sign) block.getState(); //Getting the sign state
 
-        String PlayerOnSignVariable = sign.getLine(1);
+        UUID PlayerOnSignVariable = Bukkit.getPlayer(sign.getLine(1)).getUniqueId();
 
         return PlayerOnSignVariable;
     }
 
-    private Block getAttachedBlock(Block signBlock){
-        if (signBlock == null) {
-            plugin.getLogger().log(Level.SEVERE, "signBlock was null");
-            return null;  // Pass null, get null.
-            }
-
-        if (signBlock.getState() instanceof Attachable){
-            // The block state is an attachable, cast is safe:
-            Attachable attachable = (Attachable)signBlock.getState();
-            plugin.getLogger().log(Level.INFO, "[DEBUG] We got the state of the signblock");
-            /*
-                The attachable block's nearest block, at the attached face, is returned.
-            */
-            return signBlock.getRelative(attachable.getAttachedFace());
+    private Block getAttachedBlock(Block sb){
+        if (sb.getType() == Material.WALL_SIGN) {
+            Sign s = (Sign) sb.getState().getData();
+            return sb.getRelative( ((org.bukkit.material.Sign)(s.getData())).getAttachedFace());
+        } else {
+            return null;
         }
-        plugin.getLogger().log(Level.SEVERE, "The passed block wasn't attachable");
-        return null;  // The passed block wasn't attachable.
-    }
+        }
 
     private int inactivityDays(PlayerInteractEvent event){
 
-        String PlayerOnSign = playerOnSign(event);
+        UUID PlayerOnSign = playerOnSign(event);
 
         long lastseen = Bukkit.getOfflinePlayer(PlayerOnSign).getLastPlayed();
 
@@ -124,7 +101,7 @@ public class InactiveLocketteListener implements Listener {
 
         if(attachedBlock.getType().equals(Material.CHEST)){
 
-            Player player = event.getPlayer(); //Getting the player who clicked the sign
+            Player player = event.getPlayer(); //Getting the player who punched the sign
 
             String prefix = plugin.getConfig().getString("settingsChat.prefix"); //Creating useful variable
 
@@ -247,7 +224,7 @@ public class InactiveLocketteListener implements Listener {
 
             String location = x + ", " + y + ", " + z;
 
-            String PlayerOnSign = playerOnSign(event);
+            String PlayerOnSign = playerOnSign(event).toString();
 
             String prefix = plugin.getConfig().getString("settingsChat.prefix"); //Creating useful variable
 
@@ -259,7 +236,7 @@ public class InactiveLocketteListener implements Listener {
 
     private void signHasPrivate(PlayerInteractEvent event){
         Player player = event.getPlayer(); //Getting the player who clicked the sign
-        String PlayerOnSign = playerOnSign(event);
+        String PlayerOnSign = playerOnSign(event).toString();
         int lengthPlayerOnSign = PlayerOnSign.length();
         if(lengthPlayerOnSign<14){
             int inactivedays = inactivityDays(event); //Inactivedays variable

@@ -53,10 +53,10 @@ public class InactiveLocketteCommandHandler implements CommandExecutor {
 
 
     public void onHelp(CommandSender sender, String commandLabel, String[] args){
-        sender.sendMessage(ChatColor.GOLD + "--InactiveLockette plugin by gvlfm78--");
-        sender.sendMessage(ChatColor.GREEN + "/InactiveLockette help " + ChatColor.GOLD + "Displays help page");
-        sender.sendMessage(ChatColor.GREEN + "/InactiveLockette reload " + ChatColor.GOLD + "Reloads config file");
-        sender.sendMessage(ChatColor.GREEN + "/InactiveLockette version " + ChatColor.GOLD + "Displays plugin version");
+        sender.sendMessage(ChatColor.GOLD  + "--" + ChatColor.GREEN + "InactiveLockette plugin by gvlfm78 v" + plugin.getDescription().getVersion() + ChatColor.GOLD  + "--");
+        sender.sendMessage(ChatColor.GOLD  + "--" + ChatColor.GREEN + "/InactiveLockette help " + ChatColor.GOLD + "Displays help page" + ChatColor.GOLD  + "--");
+        sender.sendMessage(ChatColor.GOLD  + "--" + ChatColor.GREEN + "/InactiveLockette reload " + ChatColor.GOLD + "Reloads config file" + ChatColor.GOLD  + "--");
+        sender.sendMessage(ChatColor.GOLD + "--" + ChatColor.GREEN + "InactiveLockette version " + ChatColor.GOLD + "Displays plugin version" + ChatColor.GOLD  + "--");
     }
 
     public void onReload(CommandSender sender, String commandLabel, String[] args){

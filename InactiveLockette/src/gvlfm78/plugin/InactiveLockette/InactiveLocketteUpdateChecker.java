@@ -9,7 +9,12 @@ import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-public class UpdateChecker {
+public class InactiveLocketteUpdateChecker {
+
+    public InactiveLocketteUpdateChecker(InactiveLockette ILUC)
+    {
+        this.plugin = ILUC;
+    }
 
     private InactiveLockette plugin;
     private URL filesFeed;
@@ -17,7 +22,7 @@ public class UpdateChecker {
     private String version;
     private String link;
 
-    public UpdateChecker(InactiveLockette plugin, String url){
+    public InactiveLocketteUpdateChecker(InactiveLockette plugin, String url){
         this.plugin = plugin;
 
         try{

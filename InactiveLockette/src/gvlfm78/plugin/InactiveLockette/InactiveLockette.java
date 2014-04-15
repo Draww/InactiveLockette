@@ -18,12 +18,12 @@ public class InactiveLockette extends JavaPlugin {
     InactiveLocketteConfigHandler ilch = InactiveLocketteConfigHandler.getInstance(); //Getting the instance of the Config Handler
     private Block signBlock = null;
 
-    protected UpdateChecker updateChecker;
+    protected InactiveLocketteUpdateChecker updateChecker;
 
     @Override
     public void onEnable(){
 
-        this.updateChecker = new UpdateChecker(this, "http://dev.bukkit.org/bukkit-plugins/inactivelockette2/files.rss");
+        this.updateChecker = new InactiveLocketteUpdateChecker(this, "http://dev.bukkit.org/bukkit-plugins/inactivelockette2/files.rss");
         this.updateChecker.updateNeeded();
 
         if(this.updateChecker.updateNeeded()&&getConfig().getBoolean("settings.checkForUpdates")){
