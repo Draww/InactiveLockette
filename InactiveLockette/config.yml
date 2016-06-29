@@ -1,13 +1,13 @@
 # InactiveLockette Plugin by gvlfm78
-# Bukkit Page: 
-# Spigot Page: 
-# GitHub Page: 
+# Bukkit Page: http://dev.bukkit.org/bukkit-plugins/inactive-lockette
+# Spigot Page: Coming very soon!
+# GitHub Page: https://github.com/gvlfm78/InactiveLockette
 
 # Language for the locale file - you must delete the locale and then
 # do /il reload for them to be re-created with the language set here
 # If you wish to contribute translations take the locale file, edit the
 # strings and send them over to me. I'll put them in the next version.
-# Currently available languages: enGB, itIT
+# Currently available languages: enGB, itIT, frFR
 language: enGB
 
 # After how many days the lock should be openable
@@ -21,8 +21,8 @@ onClickDisplayDaysToWait: true
 # If the plugin should broadcast a message with the coordinates and block type of
 # the opened container for other players to hunt it down
 broadcast: true
-# If the plugin should check if the player has the permission inactivelockette.player
-# before allowing them to open the lock
+# If the plugin should check if the player has the permission
+# inactivelockette.player before allowing them to open the lock
 permissionToOpenLocks: true
 # If the plugin should use economy
 useEconomy: false

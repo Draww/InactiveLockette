@@ -16,9 +16,9 @@ public class ILUpdateChecker {
 	private URL filesFeed;
 	private String version;
 	private String link;
-	private ILConfigHandler conf;
+	private final String url = "http://dev.bukkit.org/bukkit-plugins/inactive-lockette/files.rss";
 
-	public ILUpdateChecker(String url, ILMain plugin){
+	public ILUpdateChecker(ILMain plugin){
 
 		try{
 			this.filesFeed = new URL(url);
@@ -26,7 +26,6 @@ public class ILUpdateChecker {
 			e.printStackTrace();
 		}
 		this.plugin = plugin;
-		this.conf = new ILConfigHandler(plugin);
 	}
 
 	public boolean updateNeeded(){
@@ -44,7 +43,7 @@ public class ILUpdateChecker {
 				return true;
 			}
 		} catch (Exception e) {
-			plugin.getServer().getLogger().severe(conf.mes("onPluginLoad.failedUpdateCheck"));
+			plugin.getServer().getLogger().info(ILConfigHandler.mes("onPluginLoad.failedUpdateCheck"));
 		}
 
 		return false;

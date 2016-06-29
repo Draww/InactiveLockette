@@ -1,7 +1,6 @@
 package gvlfm78.plugin.InactiveLockette;
 
 import java.text.DecimalFormat;
-import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -11,30 +10,26 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.metadata.MetadataValue;
 import org.yi.acru.bukkit.Lockette.Lockette;
 
 public class ILListener implements Listener {
 
 	private ILMain plugin;
-	private FileConfiguration config;
 	private ILConfigHandler conf;
 
 	public ILListener(ILMain plugin){
 		this.plugin = plugin;
 		this.conf = new ILConfigHandler(plugin);
-		this.config = plugin.getConfig();
 	}
-
-	@SuppressWarnings("deprecation")
+	
 	@EventHandler(ignoreCancelled=true, priority = EventPriority.HIGH)
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		if(event.getAction() == Action.LEFT_CLICK_BLOCK){
@@ -42,7 +37,7 @@ public class ILListener implements Listener {
 			if ((block.getState() instanceof Sign)&&(block.getType() == Material.WALL_SIGN)){ //Player Left Clicked a wall sign
 				Sign sign = (Sign) block.getState();
 				if (sign.getLine(0).equalsIgnoreCase("[Private]") ||//The first line of the sign contains [Private]
-						sign.getLine(0).equalsIgnoreCase(config.getString("settingsChat.firstLine"))){ //The first line of the sign contains custom [Private] text
+						sign.getLine(0).equalsIgnoreCase(ILConfigHandler.config.getString("["+"settingsChat.firstLine"+"]"))){ //The first line of the sign contains custom [Private] text
 
 					Player player = event.getPlayer();
 
@@ -51,7 +46,7 @@ public class ILListener implements Listener {
 						String ownerName = Bukkit.getOfflinePlayer(ownerUUID).getName();
 						if(isOverlyInactive(ownerUUID)){
 							//Lock owner is inactive
-							if(config.getBoolean("settings.permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")){//If they have permission
+							if(ILConfigHandler.config.getBoolean("settings.permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")){//If they have permission
 								//If capitalism is enabled and they have the munniez, make them pay
 								makeUserPay(player);
 
@@ -66,7 +61,7 @@ public class ILListener implements Listener {
 								broadcast(attachedBlock,player.getName(),ownerName);
 							}
 							else//They don't have permission
-								player.sendMessage(ChatColor.DARK_RED+conf.mes("onPunch.messageNoPermission"));
+								player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.messageNoPermission"));
 						}
 						else{
 							//Owner is still active
@@ -75,7 +70,21 @@ public class ILListener implements Listener {
 						}
 					}
 					else{//Don't use UUIDs
-
+						String ownerName = sign.getLine(1);
+						if(isOverlyInactive(ownerName)){
+							if(ILConfigHandler.config.getBoolean("settings.permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")){
+								makeUserPay(player);
+								Block attachedBlock = Lockette.getSignAttachedBlock(block);
+								clearContainer(attachedBlock,player);
+								block.breakNaturally();
+								broadcast(attachedBlock,player.getName(),ownerName);
+							}
+							else
+								player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.messageNoPermission"));
+						}
+						else{
+							ownerStillActive(player,getInactivityDays(ownerName));
+						}
 					}
 				}
 			}
@@ -83,20 +92,20 @@ public class ILListener implements Listener {
 	}
 	private void clearContainer(Block block,Player player){
 		//Block is block the sign was attached on
-		if(config.getBoolean("clearItems")){
+		if(ILConfigHandler.config.getBoolean("clearItems")){
 			String mat = block.getType().toString().toLowerCase();
 			switch(mat){//Chest, trapped chest, furnace, dispenser, dropper, brewing stand, hopper,
 			case "chest": case "trapped_chest": case "furnace": case "dispenser": case "dropper": case "brewing_stand": case "hopper":
 				InventoryHolder ih = (InventoryHolder) block.getState();
 				ih.getInventory().clear();
-				player.sendMessage(conf.mes("onUnlock.cleared"));
+				player.sendMessage(ILConfigHandler.mes("onUnlock.cleared"));
 				break;
 			}
 		}
 	}
 	private void broadcast(Block block, String breakerName, String ownerName){
 		// Block is the block that was unlocked
-		if(config.getBoolean("broadcast")){
+		if(ILConfigHandler.config.getBoolean("broadcast")){
 
 			if(block == null){
 				plugin.getLogger().severe("The attachedBlock was null!");;
@@ -115,37 +124,37 @@ public class ILListener implements Listener {
 
 				String location = x + ", " + y + ", " + z;
 
-				Bukkit.broadcastMessage(conf.mes("messages.broadcast").replaceAll("%block%", blockName).replaceAll("%owner%", ownerName).replaceAll("%breaker%", breakerName).replaceAll("%coordinates%", location));
+				Bukkit.broadcastMessage(ILConfigHandler.mes("messages.broadcast").replaceAll("%block%", blockName).replaceAll("%owner%", ownerName).replaceAll("%breaker%", breakerName).replaceAll("%coordinates%", location));
 			}
 		}
 	}
 	private void ownerStillActive(Player player,long inactivityDays){
-		player.sendMessage(conf.mes("onPunch.active"));
-		if(config.getBoolean("settings.onClickDisplayDays")){
-			player.sendMessage(conf.mes("onPunch.inactive").replaceAll("%inactiveDays%", Long.toString(inactivityDays)));
+		player.sendMessage(ILConfigHandler.mes("onPunch.active"));
+		if(ILConfigHandler.config.getBoolean("onClickDisplayDays")){
+			player.sendMessage(ILConfigHandler.mes("onPunch.inactive").replaceAll("%inactivedays%", Long.toString(inactivityDays)));
 		}
-		if(config.getBoolean("settings.onClickDisplayDaysToWait")){
-			long daysToWait = config.getInt("daysOfInactivity")-inactivityDays;
-			player.sendMessage(conf.mes("onPunch.daysToWait").replaceAll("%daystowait%", Long.toString(daysToWait)));
+		if(ILConfigHandler.config.getBoolean("onClickDisplayDaysToWait")){
+			long daysToWait = ILConfigHandler.config.getInt("daysOfInactivity")-inactivityDays;
+			player.sendMessage(ILConfigHandler.mes("onPunch.daysToWait").replaceAll("%daystowait%", Long.toString(daysToWait)));
 		}
 	}
 	private void makeUserPay(Player p){
-		if(config.getBoolean("useEconomy")&&ILMain.econ.isEnabled()&&ILMain.econ.hasAccount(p)){//If economy is enabled
-			double cost = config.getInt("cost");
+		if(ILConfigHandler.config.getBoolean("useEconomy")&&ILMain.econ.isEnabled()&&ILMain.econ.hasAccount(p)){//If economy is enabled
+			double cost = ILConfigHandler.config.getInt("cost");
 			double balance = ILMain.econ.getBalance(p);
 			if(ILMain.econ.has(p, cost)){//If player has the munniez
 				ILMain.econ.withdrawPlayer(p, cost);//Take the munniez
 				DecimalFormat df = new DecimalFormat("0.00");
 				String moneyCost = df.format(cost);
 				String newBalance = df.format(ILMain.econ.getBalance(p));
-				p.sendMessage(conf.mes("messages.moneyWithdraw").replaceAll("%cost%", moneyCost).replaceAll("%balance%", newBalance));
+				p.sendMessage(ILConfigHandler.mes("messages.moneyWithdraw").replaceAll("%cost%", moneyCost).replaceAll("%balance%", newBalance));
 			}
 			else{//Player is poor
 				DecimalFormat df = new DecimalFormat("0.00");
 				String moneyNeeded = df.format(cost-balance);
 				String moneyCost = df.format(cost);
 				String newBalance = df.format(ILMain.econ.getBalance(p));
-				p.sendMessage(conf.mes("messages.moneyTransactionFailed").replaceAll("%cost%", moneyCost).replaceAll("%balance%", newBalance).replaceAll("%needed%", moneyNeeded));
+				p.sendMessage(ILConfigHandler.mes("messages.moneyTransactionFailed").replaceAll("%cost%", moneyCost).replaceAll("%balance%", newBalance).replaceAll("%needed%", moneyNeeded));
 			}
 		}
 	}
@@ -164,8 +173,7 @@ public class ILListener implements Listener {
 	}
 
 	private boolean isOverlyInactive(OfflinePlayer op){
-		return true;
-		//return getInactivityTime(op)/86400000>config.getLong("daysOfInactivity") ? true : false;	
+		return getInactivityTime(op)/86400000>ILConfigHandler.config.getLong("daysOfInactivity") ? true : false;	
 	}
 	@SuppressWarnings("deprecation")
 	private boolean isOverlyInactive(String s){
@@ -174,14 +182,18 @@ public class ILListener implements Listener {
 	private boolean isOverlyInactive(UUID uuid){
 		return isOverlyInactive(Bukkit.getOfflinePlayer(uuid));
 	}
+	
+	@EventHandler
+	public void onPlayerJoin(PlayerJoinEvent e){
+		if(ILConfigHandler.config.getBoolean("checkForUpdates")){
+			ILUpdateChecker updateChecker = new ILUpdateChecker(plugin);
 
-	private UUID getUUIDFromMeta(Sign sign, int index) {
-		if (sign.hasMetadata("LocketteUUIDs")) {
-			List<?> list = sign.getMetadata("LocketteUUIDs");
-
-			return ((UUID[])(UUID[])((MetadataValue)list.get(0)).value())[(index - 1)];
+			if(updateChecker.updateNeeded()){
+				Player p = e.getPlayer();
+				p.sendMessage(ILConfigHandler.mes("onPluginLoad.updateAvailable")+" "+updateChecker.getVersion());
+				p.sendMessage(ILConfigHandler.mes("onPluginLoad.updateAvailableLink")+" "+updateChecker.getLink());
+			}
 		}
-		return null;
 	}
 
 	//Get active player UUIDs from sign

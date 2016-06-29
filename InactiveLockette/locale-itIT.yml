@@ -1,29 +1,24 @@
 # InactiveLockette plugin di gvlfm78
-# Localizzazione italiana di gvlfm78
+# Traduzione in italiano di gvlfm78
 settingsChat:
-  firstLine: Privato
-  prefix: '[InactiveLockette]'
+  firstLine: 'Privato'
+  prefix: '&9[InactiveLockette]'
 onPluginLoad:
-  updateAvailable: 'UUna nuova versione Ë disponibile:'
-  updateAvailableLink: 'Scaricala da:'
+  updateAvailable: '&9Una nuova versione √® disponibile:'
+  updateAvailableLink: '&9Prendila qui: &7'
+  failedUpdateCheck: '&4Qualcosa √® andato storto durante la ricerca di aggiornamenti'
 onCommand:
-  messageReloadConfig: File di configurazione ricaricato
-  messageVersion: versione
-  messageNoPermission: Non hai il permesso di utilizzare quel comando!
+  reloadConfig: '&aFile di configurazione ricaricato'
+  version: versione
+  noPermission: '&4Non hai il permesso di usare quel comando'
 onPunch:
-  messageActive: Il proprietario di questo blocco Ë ancora attivo
-  messageInactive: Il proprietario di questo blocco Ë stato inattivo per %inactivedays% giorni
-  messageDaysToWait: Devi ancora aspettare %daystowait% giorni per sbloccare questo blocco
-  messageNoPermission: Non hai il permesso di rimuovere blocchi inattivi altrui
+  active: '&cIl propietario di questo blocco √® ancora attivo'
+  inactive: '&cIl propietario di questo blocco √® stato inattivo per %inactivedays% giorni'
+  daysToWait: '&cDevi aspettare altri %daystowait% giorni per aprire questo blocco'
+  noPermission: '&4Non hai il permesso di aprire blocchi di propriet√† di persone inattive'
 onUnlock:
-  messageChest: La chest sbloccata sar‡ svuotata
-  messageFurnace: La fornace sbloccata sar‡ svuotata
-  messageDispenser: Il distributore sbloccato sar‡ svuotato
-  messageHopper: La tramoggia sbloccata sar‡ svuotata
-  messageDropper: Il gettatore sbloccato sar‡ svuotato
+  cleared: '&2L''inventario che hai sbloccato √® stato svuotato'
 messages:
-  messageBroadcast: Un %block% di propriet‡ di %owner% Ë stato/a sbloccato/a alle coordinate %coordinates%
-  messageMoneyWithdraw: 'Hai rimosso questo blocco al costo di %cost%. Nuovo bilancio: %balance%'
-  messageMoneyTransactionFailed1: Non hai abbastanza soldi per rimuovere questo blocco.
-  messageMoneyTransactionFailed2: Ti servono %cost% per rimuovere un blocco.
-  messageMoneyTransactionFailed3: Hai %balance% e necessiti altri %moneyneeded%.
+  broadcast: '&dIl giocatore %breaker% ha sbloccato un(a) %block% di propriet√† di %owner% alle coordinate %coordinates%'
+  moneyWithdraw: '&2Hai rimosso questo blocco per $%cost%. Nuovo bilancio: $%balance%'
+  moneyTransactionFailed: '&cNon hai abbastanza soldi per rimuovere questo blocco.\nTi servono $%cost% per aprire un blocco.\nTu hai $%balance% e ti servono altri $%needed%.'

@@ -3,6 +3,7 @@ package gvlfm78.plugin.InactiveLockette;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -36,11 +37,11 @@ public class ILMain extends JavaPlugin {
 
 		//Update Checking
 		if(getConfig().getBoolean("checkForUpdates")){
-			updateChecker = new ILUpdateChecker("http://dev.bukkit.org/bukkit-plugins/inactive-lockette/files.rss",this);
+			updateChecker = new ILUpdateChecker(this);
 
 			if(updateChecker.updateNeeded()){
-				log.info(getConfig().getString("onPluginLoad.updateAvailable")+" "+this.updateChecker.getVersion());
-				log.info(getConfig().getString("onPluginLoad.updateAvailableLink")+" "+this.updateChecker.getLink());
+				log.info(ChatColor.stripColor(ILConfigHandler.mes("onPluginLoad.updateAvailable")+" "+this.updateChecker.getVersion()));
+				log.info(ChatColor.stripColor(ILConfigHandler.mes("onPluginLoad.updateAvailableLink")+" "+this.updateChecker.getLink()));
 			}
 		}
 

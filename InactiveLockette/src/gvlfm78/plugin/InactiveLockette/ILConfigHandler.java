@@ -19,23 +19,30 @@ import org.bukkit.configuration.file.YamlConfiguration;
 public class ILConfigHandler {
 
 	private ILMain plugin;
-	private FileConfiguration config;
-	private YamlConfiguration locale;
+	public static  FileConfiguration config;
+	private static YamlConfiguration locale;
 
 	public ILConfigHandler(ILMain plugin){
-		this.plugin=plugin;
-		this.config = plugin.getConfig();
-		this.locale = getLocale();
+		this.plugin = plugin;
+		locale = getLocale();
+		config = plugin.getConfig();
 	}
-	
-	public final String mes(String path){
+
+	public static String mes(String path){
 		String mes =  locale.getString(path);
 		if(mes!=null&&!mes.isEmpty())
-		 return (locale.getString("settingsChat.prefix") +" "+ mes) .replaceAll("(?i)&([a-fk-r0-9])", "\u00A7$1");
+			return (locale.getString("settingsChat.prefix") +" "+ mes).replaceAll("(?i)&([a-fk-r0-9])", "\u00A7$1");
 		else
 			return ChatColor.DARK_RED+"[InactiveLockette] Message String "+path+" is null!";
 	}
-	
+	public static String mesnopre(String path){
+		String mes =  locale.getString(path);
+		if(mes!=null&&!mes.isEmpty())
+			return (mes).replaceAll("(?i)&([a-fk-r0-9])", "\u00A7$1");
+		else
+			return ChatColor.DARK_RED+"[InactiveLockette] Message String "+path+" is null!";
+	}
+
 	public void saveConfiguration(File file, YamlConfiguration config){
 
 		try{
@@ -69,7 +76,7 @@ public class ILConfigHandler {
 		badLoc.renameTo(getLocaleFile());
 		plugin.getLogger().info(code+" Language strings generated");
 	}
-	
+
 	//Setting up methods
 	public void setupConfigYML(){
 		if(!getConfigYMLFile().exists())
@@ -79,10 +86,18 @@ public class ILConfigHandler {
 		return config.getString("language");
 	}
 	public void setupLocale(){
-		if(!getLocaleFile().exists())
-		saveLanguageFile(getLanguage());
+		if(!getLocaleFile().exists()){
+			String lang = getLanguage();
+			switch(lang){
+			case "enGB": case "itIT": case "frFR":
+				saveLanguageFile(lang);
+				break;
+			default: plugin.getLogger().info("Invalid language code in config.yml! Loading up english locale");
+			saveLanguageFile("enGB");
+			}
+		}
 	}
-	
+
 	//Getters
 	public YamlConfiguration getLocale(){
 		return getYML(getLocaleFile());
@@ -107,8 +122,9 @@ public class ILConfigHandler {
 	//Reload methods
 	public void reloadConfigs(){
 		setupConfigYML();
-		setupLocale();
 		plugin.reloadConfig();
-		this.locale = getLocale();
+		config = plugin.getConfig();
+		setupLocale();
+		locale = getLocale();
 	}
 }
