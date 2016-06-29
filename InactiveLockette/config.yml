@@ -1,0 +1,33 @@
+# InactiveLockette Plugin by gvlfm78
+# Bukkit Page: 
+# Spigot Page: 
+# GitHub Page: 
+
+# Language for the locale file - you must delete the locale and then
+# do /il reload for them to be re-created with the language set here
+# If you wish to contribute translations take the locale file, edit the
+# strings and send them over to me. I'll put them in the next version.
+# Currently available languages: enGB, itIT
+language: enGB
+
+# After how many days the lock should be openable
+daysOfInactivity: 30
+# If the plugin should empty the opened containers
+clearItems: false
+# If the plugin should show how long the owner of the lock has been inactive for
+onClickDisplayDays: true
+# If the plugin should show how many days until the lock can be opened
+onClickDisplayDaysToWait: true
+# If the plugin should broadcast a message with the coordinates and block type of
+# the opened container for other players to hunt it down
+broadcast: true
+# If the plugin should check if the player has the permission inactivelockette.player
+# before allowing them to open the lock
+permissionToOpenLocks: true
+# If the plugin should use economy
+useEconomy: false
+# Cost the player pays every time they break open a container
+# if economy is enabled
+cost: 500.0
+# If the plugin should check for updates
+checkForUpdates: true

@@ -1,0 +1,24 @@
+# InactiveLockette plugin by gvlfm78
+# English locale by gvlfm78
+settingsChat:
+  firstLine: '[Private]'
+  prefix: '&9[InactiveLockette]'
+onPluginLoad:
+  updateAvailable: '&1A new version is available:'
+  updateAvailableLink: '&1Get it from:'
+  failedUpdateCheck: '&4Something went wrong while trying to check for updates'
+onCommand:
+  reloadConfig: '&aConfiguration file reloaded'
+  version: version
+  noPermission: '&4You are not allowed to use that command'
+onPunch:
+  active: '&cThe owner of this lock is still active'
+  inactive: '&9The owner of this lock has been inactive for %inactivedays% days'
+  daysToWait: '&9You still have to wait %daystowait% days to open this lock'
+  noPermission: '&4You are not allowed to open inactive locks'
+onUnlock:
+  cleared: '&1The inventory you unlocked was cleared'
+messages:
+  broadcast: '&dPlayer %breaker% unlocked a %block% owned by %owner% at coordinates %coordinates%'
+  moneyWithdraw: '&2You have removed this lock for $%cost%. New balance: $%balance%'
+  moneyTransactionFailed: '&cYou do not have enough money to remove this lock.\nYou need $%cost% to open a lock.\nYou have $%balance% and require another $%needed%.'

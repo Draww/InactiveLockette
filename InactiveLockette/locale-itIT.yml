@@ -1,0 +1,29 @@
+# InactiveLockette plugin di gvlfm78
+# Localizzazione italiana di gvlfm78
+settingsChat:
+  firstLine: Privato
+  prefix: '[InactiveLockette]'
+onPluginLoad:
+  updateAvailable: 'UUna nuova versione è disponibile:'
+  updateAvailableLink: 'Scaricala da:'
+onCommand:
+  messageReloadConfig: File di configurazione ricaricato
+  messageVersion: versione
+  messageNoPermission: Non hai il permesso di utilizzare quel comando!
+onPunch:
+  messageActive: Il proprietario di questo blocco è ancora attivo
+  messageInactive: Il proprietario di questo blocco è stato inattivo per %inactivedays% giorni
+  messageDaysToWait: Devi ancora aspettare %daystowait% giorni per sbloccare questo blocco
+  messageNoPermission: Non hai il permesso di rimuovere blocchi inattivi altrui
+onUnlock:
+  messageChest: La chest sbloccata sarà svuotata
+  messageFurnace: La fornace sbloccata sarà svuotata
+  messageDispenser: Il distributore sbloccato sarà svuotato
+  messageHopper: La tramoggia sbloccata sarà svuotata
+  messageDropper: Il gettatore sbloccato sarà svuotato
+messages:
+  messageBroadcast: Un %block% di proprietà di %owner% è stato/a sbloccato/a alle coordinate %coordinates%
+  messageMoneyWithdraw: 'Hai rimosso questo blocco al costo di %cost%. Nuovo bilancio: %balance%'
+  messageMoneyTransactionFailed1: Non hai abbastanza soldi per rimuovere questo blocco.
+  messageMoneyTransactionFailed2: Ti servono %cost% per rimuovere un blocco.
+  messageMoneyTransactionFailed3: Hai %balance% e necessiti altri %moneyneeded%.
