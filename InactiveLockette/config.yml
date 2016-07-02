@@ -1,6 +1,6 @@
 # InactiveLockette Plugin by gvlfm78
 # Bukkit Page: http://dev.bukkit.org/bukkit-plugins/inactive-lockette
-# Spigot Page: Coming very soon!
+# Spigot Page: https://www.spigotmc.org/resources/inactive-lockette.25644
 # GitHub Page: https://github.com/gvlfm78/InactiveLockette
 
 # Language for the locale file - you must delete the locale and then
@@ -11,6 +11,7 @@
 language: enGB
 
 # After how many days the lock should be openable
+# You can set this to -1 if you want the locks to always be openable
 daysOfInactivity: 30
 # If the plugin should empty the opened containers
 clearItems: false
@@ -31,3 +32,15 @@ useEconomy: false
 cost: 500.0
 # If the plugin should check for updates
 checkForUpdates: true
+# List of people whose locks will not be allowed to be opened
+# Example list: [gvlfm78] Another example list: [gvlfm78,8cd16032-c3d5-35a0-8c41-a9fd41178779,BestPlayer]
+list: []
+
+
+
+###########################################################
+#####################OTHER SETTINGS########################
+## DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU'RE DOING ###
+## IF IN DOUBT, NO, YOU DON'T KNOW WHAT YOU'RE DOING ######
+###########################################################
+config-version: 1

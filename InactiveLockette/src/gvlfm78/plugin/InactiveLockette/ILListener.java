@@ -16,34 +16,40 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.InventoryHolder;
 import org.yi.acru.bukkit.Lockette.Lockette;
 
 public class ILListener implements Listener {
 
 	private ILMain plugin;
-	private ILConfigHandler conf;
 
 	public ILListener(ILMain plugin){
 		this.plugin = plugin;
-		this.conf = new ILConfigHandler(plugin);
 	}
 	
-	@EventHandler(ignoreCancelled=true, priority = EventPriority.HIGH)
+	@EventHandler(ignoreCancelled=true, priority = EventPriority.HIGHEST)
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		if(event.getAction() == Action.LEFT_CLICK_BLOCK){
 			Block block = event.getClickedBlock();
 			if ((block.getState() instanceof Sign)&&(block.getType() == Material.WALL_SIGN)){ //Player Left Clicked a wall sign
+				
 				Sign sign = (Sign) block.getState();
-				if (sign.getLine(0).equalsIgnoreCase("[Private]") ||//The first line of the sign contains [Private]
-						sign.getLine(0).equalsIgnoreCase(ILConfigHandler.config.getString("["+"settingsChat.firstLine"+"]"))){ //The first line of the sign contains custom [Private] text
+				String line1 = sign.getLine(0);
+				
+				if (line1.equalsIgnoreCase("[Private]") ||//The first line of the sign contains [Private]
+						line1.equalsIgnoreCase(ILConfigHandler.config.getString("["+"settingsChat.firstLine"+"]"))){ //The first line of the sign contains custom [Private] text
 
 					Player player = event.getPlayer();
+					UUID ownerUUID = Lockette.getProtectedOwnerUUID(block);
+					String ownerName = sign.getLine(1);
 
-					if(conf.useUUIDs()){//Use UUIDs
-						UUID ownerUUID = Lockette.getProtectedOwnerUUID(block);
-						String ownerName = Bukkit.getOfflinePlayer(ownerUUID).getName();
+					if(plugin.getConfig().getList("list").contains(ownerName)||plugin.getConfig().getList("list").contains(ownerUUID.toString())){
+						player.sendMessage(ILConfigHandler.mes("onPunch.noPermission"));
+						return;
+					}
+						
+					
+					if(ownerUUID!=null&&!ownerUUID.toString().isEmpty()){//Use UUIDs
 						if(isOverlyInactive(ownerUUID)){
 							//Lock owner is inactive
 							if(ILConfigHandler.config.getBoolean("settings.permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")){//If they have permission
@@ -61,7 +67,7 @@ public class ILListener implements Listener {
 								broadcast(attachedBlock,player.getName(),ownerName);
 							}
 							else//They don't have permission
-								player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.messageNoPermission"));
+								player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.noPermission"));
 						}
 						else{
 							//Owner is still active
@@ -70,7 +76,6 @@ public class ILListener implements Listener {
 						}
 					}
 					else{//Don't use UUIDs
-						String ownerName = sign.getLine(1);
 						if(isOverlyInactive(ownerName)){
 							if(ILConfigHandler.config.getBoolean("settings.permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")){
 								makeUserPay(player);
@@ -80,7 +85,7 @@ public class ILListener implements Listener {
 								broadcast(attachedBlock,player.getName(),ownerName);
 							}
 							else
-								player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.messageNoPermission"));
+								player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.noPermission"));
 						}
 						else{
 							ownerStillActive(player,getInactivityDays(ownerName));
@@ -181,19 +186,6 @@ public class ILListener implements Listener {
 	}
 	private boolean isOverlyInactive(UUID uuid){
 		return isOverlyInactive(Bukkit.getOfflinePlayer(uuid));
-	}
-	
-	@EventHandler
-	public void onPlayerJoin(PlayerJoinEvent e){
-		if(ILConfigHandler.config.getBoolean("checkForUpdates")){
-			ILUpdateChecker updateChecker = new ILUpdateChecker(plugin);
-
-			if(updateChecker.updateNeeded()){
-				Player p = e.getPlayer();
-				p.sendMessage(ILConfigHandler.mes("onPluginLoad.updateAvailable")+" "+updateChecker.getVersion());
-				p.sendMessage(ILConfigHandler.mes("onPluginLoad.updateAvailableLink")+" "+updateChecker.getLink());
-			}
-		}
 	}
 
 	//Get active player UUIDs from sign

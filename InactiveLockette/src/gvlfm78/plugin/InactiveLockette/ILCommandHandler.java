@@ -42,7 +42,7 @@ public class ILCommandHandler implements CommandExecutor {
     public void onDefault(CommandSender sender){
         sender.sendMessage(ChatColor.GOLD + "== " + ChatColor.GREEN + "InactiveLockette plugin by gvlfm78 v" + plugin.getDescription().getVersion() + ChatColor.GOLD  + " ==");
         sender.sendMessage(ChatColor.GOLD + "== " + ChatColor.GREEN + "Bukkit Page: " + ChatColor.GOLD  + "http://dev.bukkit.org/bukkit-plugins/inactive-lockette ==");
-        sender.sendMessage(ChatColor.GOLD + "== " + ChatColor.GREEN + "Spigot Page: " + ChatColor.GOLD  + " ==");
+        sender.sendMessage(ChatColor.GOLD + "== " + ChatColor.GREEN + "Spigot Page: " + ChatColor.GOLD  + "https://www.spigotmc.org/resources/inactive-lockette.25644 ==");
         sender.sendMessage(ChatColor.GOLD + "== " + ChatColor.GREEN + "GitHub Page: " + ChatColor.GOLD  + "https://github.com/gvlfm78/InactiveLockette ==");
         
         sender.sendMessage(ChatColor.GOLD + "== " + ChatColor.GREEN + "/il help " + ChatColor.GOLD + "Displays help page" + ChatColor.GOLD  + " ==");

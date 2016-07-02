@@ -6,7 +6,7 @@ settingsChat:
 onPluginLoad:
   updateAvailable: '&9A new version is available:'
   updateAvailableLink: '&9Get it from: &7'
-  failedUpdateCheck: '&4Something went wrong while trying to check for updates'
+  failedUpdateCheck: 'Something went wrong while trying to check for updates'
 onCommand:
   reloadConfig: '&aConfiguration file reloaded'
   version: version
@@ -15,7 +15,7 @@ onPunch:
   active: '&cThe owner of this lock is still active'
   inactive: '&cThe owner of this lock has been inactive for %inactivedays% days'
   daysToWait: '&cYou still have to wait %daystowait% days to open this lock'
-  noPermission: '&4You are not allowed to open inactive locks'
+  noPermission: '&4You are not allowed to open this lock'
 onUnlock:
   cleared: '&2The inventory you unlocked was cleared'
 messages:

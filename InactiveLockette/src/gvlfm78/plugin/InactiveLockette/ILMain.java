@@ -3,8 +3,10 @@ package gvlfm78.plugin.InactiveLockette;
 import java.io.IOException;
 import java.util.logging.Logger;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.plugin.PluginDescriptionFile;
+import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -22,10 +24,22 @@ public class ILMain extends JavaPlugin {
 	public void onEnable(){
 
 		conf.setupConfigYML();//Creates config file if not existant
+		conf.upgradeConfig();
 		conf.setupLocale();//Creates locale file if not existant
 
-		getServer().getPluginManager().registerEvents(new ILListener(this), this);//Firing event listener
+		PluginManager pm = Bukkit.getServer().getPluginManager();
+
+		if(pm.isPluginEnabled("Lockette")){
+			pm.registerEvents(new ILListener(this), this);
+			log.info("Lockette detected, enabling Lockette support");
+		}
+		else if(pm.isPluginEnabled("LockettePro")){
+			pm.registerEvents(new ILPListener(this), this);
+			log.info("LockettePro detected, enabling LockettePro support");
+		}
+
 		getCommand("inactivelockette").setExecutor(new ILCommandHandler(this));//Firing commands listener
+
 		setupEconomy();//Setting up the economy
 		if (!setupEconomy() && getConfig().getBoolean("useEconomy")) {//If economy is turned on
 			//But no vault is found it will warn the user
@@ -35,21 +49,28 @@ public class ILMain extends JavaPlugin {
 
 		log.info(getDescription().getName() + " v" + getDescription().getVersion() + " has been enabled");//Logging to console the enabling of IL
 
-		//Update Checking
-		if(getConfig().getBoolean("checkForUpdates")){
-			updateChecker = new ILUpdateChecker(this);
-
-			if(updateChecker.updateNeeded()){
-				log.info(ChatColor.stripColor(ILConfigHandler.mes("onPluginLoad.updateAvailable")+" "+this.updateChecker.getVersion()));
-				log.info(ChatColor.stripColor(ILConfigHandler.mes("onPluginLoad.updateAvailableLink")+" "+this.updateChecker.getLink()));
-			}
-		}
-
 		try {
 			Metrics metrics = new Metrics(this);
 			metrics.start();
 		} catch (IOException e) {
 			//Failed to submit the stats
+		}
+		
+		//Update Checking
+		if(getConfig().getBoolean("checkForUpdates")){
+			pm.registerEvents(new ILJoinListener(this), this);
+			final ILMain plugin = this;
+			Bukkit.getScheduler().runTaskLaterAsynchronously(this, new Runnable () {
+				public void run() {
+
+					updateChecker = new ILUpdateChecker(plugin);
+
+					if(updateChecker.updateNeeded()){
+						log.info(ChatColor.stripColor(ILConfigHandler.mes("onPluginLoad.updateAvailable")+" "+updateChecker.getVersion()));
+						log.info(ChatColor.stripColor(ILConfigHandler.mes("onPluginLoad.updateAvailableLink")+" "+updateChecker.getLink()));
+					}
+				}
+			},20L);
 		}
 	}
 

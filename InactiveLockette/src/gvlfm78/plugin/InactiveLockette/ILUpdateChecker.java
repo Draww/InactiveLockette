@@ -6,6 +6,7 @@ import java.net.URL;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 
+import org.bukkit.ChatColor;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -43,7 +44,7 @@ public class ILUpdateChecker {
 				return true;
 			}
 		} catch (Exception e) {
-			plugin.getServer().getLogger().info(ILConfigHandler.mes("onPluginLoad.failedUpdateCheck"));
+			plugin.getServer().getLogger().info(ChatColor.stripColor(ILConfigHandler.mes("onPluginLoad.failedUpdateCheck")));
 		}
 
 		return false;

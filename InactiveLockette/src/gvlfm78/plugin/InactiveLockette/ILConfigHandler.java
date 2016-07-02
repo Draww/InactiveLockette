@@ -21,6 +21,7 @@ public class ILConfigHandler {
 	private ILMain plugin;
 	public static  FileConfiguration config;
 	private static YamlConfiguration locale;
+	private final int  CONFIG_VERSION = 1;
 
 	public ILConfigHandler(ILMain plugin){
 		this.plugin = plugin;
@@ -82,6 +83,15 @@ public class ILConfigHandler {
 		if(!getConfigYMLFile().exists())
 			plugin.saveResource("config.yml", false);
 	}
+	public void upgradeConfig(){
+		if(getYML(getConfigYMLFile()).getInt("config-version")!=CONFIG_VERSION){
+			plugin.getLogger().info("Config versions do not match, backing up config and saving a new copy...");
+			File bakFile = getFile("config_bak");
+			bakFile.delete();
+			getConfigYMLFile().renameTo(bakFile);
+			setupConfigYML();
+		}
+	}
 	public String getLanguage(){
 		return config.getString("language");
 	}
@@ -114,14 +124,10 @@ public class ILConfigHandler {
 	public File getConfigYMLFile(){
 		return getFile("config");
 	}
-	public boolean useUUIDs(){
-		File file = new File("plugins"+File.separator+"Lockette"+File.separator+"config.yml");
-		YamlConfiguration config = YamlConfiguration.loadConfiguration(file);
-		return config.getBoolean("enable-uuid-support");
-	}
 	//Reload methods
 	public void reloadConfigs(){
 		setupConfigYML();
+		upgradeConfig();
 		plugin.reloadConfig();
 		config = plugin.getConfig();
 		setupLocale();

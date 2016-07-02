@@ -6,7 +6,7 @@ settingsChat:
 onPluginLoad:
   updateAvailable: '&9Una nuova versione è disponibile:'
   updateAvailableLink: '&9Prendila qui: &7'
-  failedUpdateCheck: '&4Qualcosa è andato storto durante la ricerca di aggiornamenti'
+  failedUpdateCheck: 'Qualcosa è andato storto durante la ricerca di aggiornamenti'
 onCommand:
   reloadConfig: '&aFile di configurazione ricaricato'
   version: versione
@@ -15,7 +15,7 @@ onPunch:
   active: '&cIl propietario di questo blocco è ancora attivo'
   inactive: '&cIl propietario di questo blocco è stato inattivo per %inactivedays% giorni'
   daysToWait: '&cDevi aspettare altri %daystowait% giorni per aprire questo blocco'
-  noPermission: '&4Non hai il permesso di aprire blocchi di proprietà di persone inattive'
+  noPermission: '&4Non hai il permesso di aprire questo blocco'
 onUnlock:
   cleared: '&2L''inventario che hai sbloccato è stato svuotato'
 messages:
