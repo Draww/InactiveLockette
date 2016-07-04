@@ -1,6 +1,7 @@
 package gvlfm78.plugin.InactiveLockette;
 
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -26,16 +27,16 @@ public class ILListener implements Listener {
 	public ILListener(ILMain plugin){
 		this.plugin = plugin;
 	}
-	
+
 	@EventHandler(ignoreCancelled=true, priority = EventPriority.HIGHEST)
 	public void onPlayerInteract(PlayerInteractEvent event) {
 		if(event.getAction() == Action.LEFT_CLICK_BLOCK){
 			Block block = event.getClickedBlock();
 			if ((block.getState() instanceof Sign)&&(block.getType() == Material.WALL_SIGN)){ //Player Left Clicked a wall sign
-				
+
 				Sign sign = (Sign) block.getState();
 				String line1 = sign.getLine(0);
-				
+
 				if (line1.equalsIgnoreCase("[Private]") ||//The first line of the sign contains [Private]
 						line1.equalsIgnoreCase(ILConfigHandler.config.getString("["+"settingsChat.firstLine"+"]"))){ //The first line of the sign contains custom [Private] text
 
@@ -43,16 +44,19 @@ public class ILListener implements Listener {
 					UUID ownerUUID = Lockette.getProtectedOwnerUUID(block);
 					String ownerName = sign.getLine(1);
 
-					if(plugin.getConfig().getList("list").contains(ownerName)||plugin.getConfig().getList("list").contains(ownerUUID.toString())){
-						player.sendMessage(ILConfigHandler.mes("onPunch.noPermission"));
-						return;
+					if(plugin.getConfig().getList("list")!=null&&!plugin.getConfig().getList("list").isEmpty()){
+						List<?> list = plugin.getConfig().getList("list");
+						if(list.contains(ownerName)||list.contains(ownerUUID.toString())){
+							player.sendMessage(ILConfigHandler.mes("onPunch.noPermission"));
+							return;
+						}
 					}
-						
-					
-					if(ownerUUID!=null&&!ownerUUID.toString().isEmpty()){//Use UUIDs
-						if(isOverlyInactive(ownerUUID)){
-							//Lock owner is inactive
-							if(ILConfigHandler.config.getBoolean("settings.permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")){//If they have permission
+					if( (ILConfigHandler.config.getBoolean("permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*"))
+							|| player.isOp()
+							){
+						if(ownerUUID!=null&&!ownerUUID.toString().isEmpty()){//Use UUIDs
+							if(isOverlyInactive(ownerUUID)){
+								//Lock owner is inactive
 								//If capitalism is enabled and they have the munniez, make them pay
 								makeUserPay(player);
 
@@ -66,31 +70,27 @@ public class ILListener implements Listener {
 								//Broadcast to whole server
 								broadcast(attachedBlock,player.getName(),ownerName);
 							}
-							else//They don't have permission
-								player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.noPermission"));
+							else{
+								//Owner is still active
+								//Tell user, and tell time remaining
+								ownerStillActive(player,getInactivityDays(ownerUUID));
+							}
 						}
-						else{
-							//Owner is still active
-							//Tell user, and tell time remaining
-							ownerStillActive(player,getInactivityDays(ownerUUID));
-						}
-					}
-					else{//Don't use UUIDs
-						if(isOverlyInactive(ownerName)){
-							if(ILConfigHandler.config.getBoolean("settings.permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")){
+						else{//Don't use UUIDs
+							if(isOverlyInactive(ownerName)){
 								makeUserPay(player);
 								Block attachedBlock = Lockette.getSignAttachedBlock(block);
 								clearContainer(attachedBlock,player);
 								block.breakNaturally();
 								broadcast(attachedBlock,player.getName(),ownerName);
 							}
-							else
-								player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.noPermission"));
-						}
-						else{
-							ownerStillActive(player,getInactivityDays(ownerName));
+							else{
+								ownerStillActive(player,getInactivityDays(ownerName));
+							}
 						}
 					}
+					else//They don't have permission
+						player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.noPermission"));
 				}
 			}
 		}
