@@ -1,6 +1,6 @@
 main: gvlfm78.plugin.InactiveLockette.ILMain
 name: InactiveLockette
-version: 3.1
+version: 3.1.1
 author: gvlfm78
 description: Allows opening of lockette locks after a set amount of time
 

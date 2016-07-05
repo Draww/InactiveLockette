@@ -42,19 +42,22 @@ public class ILPListener implements Listener{
 					String line2 = sign.getLine(1);
 					String ownerUUIDString = Utils.getUuidFromLine(line2);
 
-					if(ownerUUIDString!=null&&!ownerUUIDString.isEmpty()){//Use UUIDs
+					if( (ILConfigHandler.config.getBoolean("permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")||player.hasPermission("inactivelockette.admin"))
+							|| player.isOp()
+							){
 
-						UUID ownerUUID = UUID.fromString(ownerUUIDString);
-						String ownerName = Bukkit.getOfflinePlayer(ownerUUID).getName();
+						if(ownerUUIDString!=null&&!ownerUUIDString.isEmpty()){
+							//Use UUIDs
+							UUID ownerUUID = UUID.fromString(ownerUUIDString);
+							String ownerName = Bukkit.getOfflinePlayer(ownerUUID).getName();
 
-						if(plugin.getConfig().getList("list").contains(ownerName)||plugin.getConfig().getList("list").contains(ownerUUID.toString())){
-							player.sendMessage(ILConfigHandler.mes("onPunch.noPermission"));
-							return;
-						}
+							if(plugin.getConfig().getList("list").contains(ownerName)||plugin.getConfig().getList("list").contains(ownerUUID.toString())){
+								player.sendMessage(ILConfigHandler.mes("onPunch.noPermission"));
+								return;
+							}
 
-						if(isOverlyInactive(ownerUUID)){
-							//Lock owner is inactive
-							if(ILConfigHandler.config.getBoolean("settings.permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")){//If they have permission
+							if(isOverlyInactive(ownerUUID)){
+								//Lock owner is inactive
 								//If capitalism is enabled and they have the munniez, make them pay
 								makeUserPay(player);
 
@@ -68,38 +71,34 @@ public class ILPListener implements Listener{
 								//Broadcast to whole server
 								broadcast(attachedBlock,player.getName(),ownerName);
 							}
-							else//They don't have permission
-								player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.NoPermission"));
+							else{
+								//Owner is still active
+								//Tell user, and tell time remaining
+								ownerStillActive(player,getInactivityDays(ownerUUID));
+							}
 						}
-						else{
-							//Owner is still active
-							//Tell user, and tell time remaining
-							ownerStillActive(player,getInactivityDays(ownerUUID));
-						}
-					}
-					else{//Don't use UUIDs
-						String ownerName = Utils.getUsernameFromLine(line2);
-						
-						if(plugin.getConfig().getList("list").contains(ownerName)){
-							player.sendMessage(ILConfigHandler.mes("onPunch.noPermission"));
-							return;
-						}
-						
-						if(isOverlyInactive(ownerName)){
-							if(ILConfigHandler.config.getBoolean("settings.permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")){
+						else{//Don't use UUIDs
+							String ownerName = Utils.getUsernameFromLine(line2);
+
+							if(plugin.getConfig().getList("list").contains(ownerName)){
+								player.sendMessage(ILConfigHandler.mes("onPunch.noPermission"));
+								return;
+							}
+
+							if(isOverlyInactive(ownerName)){
 								makeUserPay(player);
 								Block attachedBlock = LocketteProAPI.getAttachedBlock(block);
 								clearContainer(attachedBlock,player);
 								block.breakNaturally();
 								broadcast(attachedBlock,player.getName(),ownerName);
 							}
-							else
-								player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.noPermission"));
-						}
-						else{
-							ownerStillActive(player,getInactivityDays(ownerName));
+							else{
+								ownerStillActive(player,getInactivityDays(ownerName));
+							}
 						}
 					}
+					else//They don't have permission
+						player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.noPermission"));
 				}
 			}
 		}

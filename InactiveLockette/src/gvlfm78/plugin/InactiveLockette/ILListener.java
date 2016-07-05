@@ -51,7 +51,7 @@ public class ILListener implements Listener {
 							return;
 						}
 					}
-					if( (ILConfigHandler.config.getBoolean("permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*"))
+					if( (ILConfigHandler.config.getBoolean("permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")||player.hasPermission("inactivelockette.admin"))
 							|| player.isOp()
 							){
 						if(ownerUUID!=null&&!ownerUUID.toString().isEmpty()){//Use UUIDs
