@@ -1,11 +1,10 @@
-main: gvlfm78.plugin.InactiveLockette.InactiveLockette
+main: gvlfm78.plugin.InactiveLockette.ILMain
 name: InactiveLockette
-version: 2.04
+version: 3.1.2
 author: gvlfm78
-description: Allows opening of lockette locks after a set amount of time.
+description: Allows opening of lockette locks after a set amount of time
 
-depend: [Lockette]
-softdepend: [Vault]
+softdepend: [Vault,Lockette,LockettePro]
 
 commands:
   InactiveLockette:

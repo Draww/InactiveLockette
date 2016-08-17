@@ -17,7 +17,7 @@ public class ILUpdateChecker {
 	private URL filesFeed;
 	private String version;
 	private String link;
-	private final String url = "http://dev.bukkit.org/bukkit-plugins/inactive-lockette/files.rss";
+	private final String url = "https://dev.bukkit.org/bukkit-plugins/inactive-lockette/files.rss";
 
 	public ILUpdateChecker(ILMain plugin){
 

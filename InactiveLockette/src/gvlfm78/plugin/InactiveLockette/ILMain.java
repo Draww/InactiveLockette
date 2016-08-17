@@ -14,7 +14,7 @@ import net.milkbowl.vault.economy.Economy;
 
 public class ILMain extends JavaPlugin {
 
-	private final Logger log = Logger.getLogger("Minecraft"); //Logger
+	private final Logger log = Bukkit.getLogger(); //Logger
 	public static Economy econ = null; //Creating economy variable
 	private ILConfigHandler conf = new ILConfigHandler(this); //Getting the instance of the Config Handler
 
