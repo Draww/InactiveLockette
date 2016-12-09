@@ -1,6 +1,7 @@
 package gvlfm78.plugin.InactiveLockette;
 
 import java.text.DecimalFormat;
+import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -30,76 +31,67 @@ public class ILPListener implements Listener{
 	}
 	@EventHandler(ignoreCancelled=true, priority = EventPriority.HIGHEST)
 	public void onPlayerInteract(PlayerInteractEvent event) {
-		if(event.getAction() == Action.LEFT_CLICK_BLOCK){
-			Block block = event.getClickedBlock();
-			if ((block.getState() instanceof Sign)&&(block.getType() == Material.WALL_SIGN)){ //Player Left Clicked a wall sign
-				Sign sign = (Sign) block.getState();
-				String line1 = sign.getLine(0);
-				if (line1.equalsIgnoreCase("[Private]") ||//The first line of the sign contains [Private]
-						line1.equalsIgnoreCase(ILConfigHandler.config.getString("["+"settingsChat.firstLine"+"]"))){ //The first line of the sign contains custom [Private] text
+		if(event.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
-					Player player = event.getPlayer();
-					String line2 = sign.getLine(1);
-					String ownerUUIDString = Utils.getUuidFromLine(line2);
+		Block block = event.getClickedBlock();
+		if(block.getType() != Material.WALL_SIGN) return; //Player Left Clicked a wall sign
+		Sign sign = (Sign) block.getState();
+		String line1 = sign.getLine(0);
 
-					if( (ILConfigHandler.config.getBoolean("permissionToOpenLocks")&&player.hasPermission("inactivelockette.player")||player.hasPermission("inactivelockette.*")||player.hasPermission("inactivelockette.admin"))
-							|| player.isOp()
-							){
+		if(line1.equalsIgnoreCase("[Private]") || //The first line of the sign contains [Private]
+				line1.equalsIgnoreCase("[" + ILConfigHandler.config.getString("settingsChat.firstLine") + "]")){ //The first line of the sign contains custom [Private] text
 
-						if(ownerUUIDString!=null&&!ownerUUIDString.isEmpty()){
-							//Use UUIDs
-							UUID ownerUUID = UUID.fromString(ownerUUIDString);
-							String ownerName = Bukkit.getOfflinePlayer(ownerUUID).getName();
+			Player player = event.getPlayer();
+			String line2 = sign.getLine(1);
+			String ownerUUIDString = Utils.getUuidFromLine(line2);
 
-							if(plugin.getConfig().getList("list").contains(ownerName)||plugin.getConfig().getList("list").contains(ownerUUID.toString())){
-								player.sendMessage(ILConfigHandler.mes("onPunch.noPermission"));
-								return;
-							}
+			if( !player.isOp() && !(ILConfigHandler.config.getBoolean("permissionToOpenLocks") && 
+					player.hasPermission("inactivelockette.player") || 
+					player.hasPermission("inactivelockette.*") || 
+					player.hasPermission("inactivelockette.admin"))
+					){ player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.noPermission")); return; }
 
-							if(isOverlyInactive(ownerUUID)){
-								//Lock owner is inactive
-								//If capitalism is enabled and they have the munniez, make them pay
-								makeUserPay(player);
+			if(ownerUUIDString!=null&&!ownerUUIDString.isEmpty()){
+				//Use UUIDs
+				UUID ownerUUID = UUID.fromString(ownerUUIDString);
+				String ownerName = Bukkit.getOfflinePlayer(ownerUUID).getName();
+				List<?> list = plugin.getConfig().getList("list");
+				if(list==null || list.contains(ownerName) || list.contains(ownerUUID.toString())){
+					player.sendMessage(ILConfigHandler.mes("onPunch.noPermission")); return; }
 
-								//Empty the container
-								Block attachedBlock = LocketteProAPI.getAttachedBlock(block);
-								clearContainer(attachedBlock,player);
+				if(isOverlyInactive(ownerUUID)){
+					//Lock owner is inactive
+					//If capitalism is enabled and they have the munniez, make them pay
+					makeUserPay(player);
 
-								//Break sign
-								block.breakNaturally();
+					//Empty the container
+					Block attachedBlock = LocketteProAPI.getAttachedBlock(block);
+					clearContainer(attachedBlock,player);
 
-								//Broadcast to whole server
-								broadcast(attachedBlock,player.getName(),ownerName);
-							}
-							else{
-								//Owner is still active
-								//Tell user, and tell time remaining
-								ownerStillActive(player,getInactivityDays(ownerUUID));
-							}
-						}
-						else{//Don't use UUIDs
-							String ownerName = Utils.getUsernameFromLine(line2);
+					//Break sign
+					block.breakNaturally();
 
-							if(plugin.getConfig().getList("list").contains(ownerName)){
-								player.sendMessage(ILConfigHandler.mes("onPunch.noPermission"));
-								return;
-							}
-
-							if(isOverlyInactive(ownerName)){
-								makeUserPay(player);
-								Block attachedBlock = LocketteProAPI.getAttachedBlock(block);
-								clearContainer(attachedBlock,player);
-								block.breakNaturally();
-								broadcast(attachedBlock,player.getName(),ownerName);
-							}
-							else{
-								ownerStillActive(player,getInactivityDays(ownerName));
-							}
-						}
-					}
-					else//They don't have permission
-						player.sendMessage(ChatColor.DARK_RED+ILConfigHandler.mes("onPunch.noPermission"));
+					//Broadcast to whole server
+					broadcast(attachedBlock,player.getName(),ownerName);
 				}
+				else
+					ownerStillActive(player,getInactivityDays(ownerUUID));
+				//Owner is still active
+				//Tell user, and tell time remaining
+			}
+			else{//Don't use UUIDs
+				String ownerName = Utils.getUsernameFromLine(line2);
+
+				if(plugin.getConfig().getList("list").contains(ownerName)){
+					player.sendMessage(ILConfigHandler.mes("onPunch.noPermission")); return; }
+
+				if(!isOverlyInactive(ownerName)){ ownerStillActive(player,getInactivityDays(ownerName)); return; }
+
+				makeUserPay(player);
+				Block attachedBlock = LocketteProAPI.getAttachedBlock(block);
+				clearContainer(attachedBlock,player);
+				block.breakNaturally();
+				broadcast(attachedBlock,player.getName(),ownerName);
 			}
 		}
 	}
@@ -120,10 +112,7 @@ public class ILPListener implements Listener{
 		// Block is the block that was unlocked
 		if(ILConfigHandler.config.getBoolean("broadcast")){
 
-			if(block == null){
-				plugin.getLogger().severe("The attachedBlock was null!");;
-				return;
-			}
+			if(block == null){ plugin.getLogger().severe("The attachedBlock was null!"); return; }
 			else{
 				String blockName = block.getType().name().toLowerCase().replaceAll("_", " ");
 
@@ -143,32 +132,34 @@ public class ILPListener implements Listener{
 	}
 	private void ownerStillActive(Player player,long inactivityDays){
 		player.sendMessage(ILConfigHandler.mes("onPunch.active"));
-		if(ILConfigHandler.config.getBoolean("onClickDisplayDays")){
+
+		if(ILConfigHandler.config.getBoolean("onClickDisplayDays"))
 			player.sendMessage(ILConfigHandler.mes("onPunch.inactive").replaceAll("%inactivedays%", Long.toString(inactivityDays)));
-		}
+
 		if(ILConfigHandler.config.getBoolean("onClickDisplayDaysToWait")){
-			long daysToWait = ILConfigHandler.config.getInt("daysOfInactivity")-inactivityDays;
+			long daysToWait = ILConfigHandler.config.getInt("daysOfInactivity") - inactivityDays;
 			player.sendMessage(ILConfigHandler.mes("onPunch.daysToWait").replaceAll("%daystowait%", Long.toString(daysToWait)));
 		}
 	}
 	private void makeUserPay(Player p){
-		if(ILConfigHandler.config.getBoolean("useEconomy")&&ILMain.econ.isEnabled()&&ILMain.econ.hasAccount(p)){//If economy is enabled
-			double cost = ILConfigHandler.config.getInt("cost");
-			double balance = ILMain.econ.getBalance(p);
-			if(ILMain.econ.has(p, cost)){//If player has the munniez
-				ILMain.econ.withdrawPlayer(p, cost);//Take the munniez
-				DecimalFormat df = new DecimalFormat("0.00");
-				String moneyCost = df.format(cost);
-				String newBalance = df.format(ILMain.econ.getBalance(p));
-				p.sendMessage(ILConfigHandler.mes("messages.moneyWithdraw").replaceAll("%cost%", moneyCost).replaceAll("%balance%", newBalance));
-			}
-			else{//Player is poor
-				DecimalFormat df = new DecimalFormat("0.00");
-				String moneyNeeded = df.format(cost-balance);
-				String moneyCost = df.format(cost);
-				String newBalance = df.format(ILMain.econ.getBalance(p));
-				p.sendMessage(ILConfigHandler.mes("messages.moneyTransactionFailed").replaceAll("%cost%", moneyCost).replaceAll("%balance%", newBalance).replaceAll("%needed%", moneyNeeded));
-			}
+		if(!ILConfigHandler.config.getBoolean("useEconomy") || ILMain.econ.isEnabled()) return;
+
+		double cost = ILConfigHandler.config.getInt("cost");
+		double balance = ILMain.econ.getBalance(p);
+
+		if(ILMain.econ.has(p, cost)){//If player has the munniez
+			ILMain.econ.withdrawPlayer(p, cost);//Take the munniez
+			DecimalFormat df = new DecimalFormat("0.00");
+			String moneyCost = df.format(cost);
+			String newBalance = df.format(ILMain.econ.getBalance(p));
+			p.sendMessage(ILConfigHandler.mes("messages.moneyWithdraw").replaceAll("%cost%", moneyCost).replaceAll("%balance%", newBalance));
+		}
+		else{//Player is poor
+			DecimalFormat df = new DecimalFormat("0.00");
+			String moneyNeeded = df.format(cost-balance);
+			String moneyCost = df.format(cost);
+			String newBalance = df.format(ILMain.econ.getBalance(p));
+			p.sendMessage(ILConfigHandler.mes("messages.moneyTransactionFailed").replaceAll("%cost%", moneyCost).replaceAll("%balance%", newBalance).replaceAll("%needed%", moneyNeeded));
 		}
 	}
 	private long getInactivityDays(OfflinePlayer op){
@@ -186,7 +177,7 @@ public class ILPListener implements Listener{
 	}
 
 	private boolean isOverlyInactive(OfflinePlayer op){
-		return getInactivityTime(op)/86400000>ILConfigHandler.config.getLong("daysOfInactivity") ? true : false;	
+		return getInactivityTime(op) / 86400000 > ILConfigHandler.config.getLong("daysOfInactivity");	
 	}
 	@SuppressWarnings("deprecation")
 	private boolean isOverlyInactive(String s){
