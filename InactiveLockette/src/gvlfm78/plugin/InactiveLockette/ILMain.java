@@ -4,12 +4,12 @@ import java.io.IOException;
 import java.util.logging.Logger;
 
 import org.bukkit.Bukkit;
-import org.bukkit.ChatColor;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import gvlfm78.plugin.InactiveLockette.Updater.UpdateResult;
 import net.milkbowl.vault.economy.Economy;
 
 public class ILMain extends JavaPlugin {
@@ -17,8 +17,6 @@ public class ILMain extends JavaPlugin {
 	private final Logger log = Bukkit.getLogger(); //Logger
 	public static Economy econ = null; //Creating economy variable
 	private ILConfigHandler conf = new ILConfigHandler(this); //Getting the instance of the Config Handler
-
-	protected ILUpdateChecker updateChecker;
 
 	@Override
 	public void onEnable(){
@@ -55,19 +53,19 @@ public class ILMain extends JavaPlugin {
 		} catch (IOException e) {
 			//Failed to submit the stats
 		}
-		
+
 		//Update Checking
 		if(getConfig().getBoolean("checkForUpdates")){
-			pm.registerEvents(new ILJoinListener(this), this);
+			pm.registerEvents(new ILJoinListener(this, this.getFile()), this);
 			final ILMain plugin = this;
 			Bukkit.getScheduler().runTaskLaterAsynchronously(this, new Runnable () {
 				public void run() {
 
-					updateChecker = new ILUpdateChecker(plugin);
+					Updater updater = new Updater(plugin, 52457, plugin.getFile(), Updater.UpdateType.NO_DOWNLOAD, false);
 
-					if(updateChecker.updateNeeded()){
-						log.info(ChatColor.stripColor(ILConfigHandler.mes("onPluginLoad.updateAvailable")+" "+updateChecker.getVersion()));
-						log.info(ChatColor.stripColor(ILConfigHandler.mes("onPluginLoad.updateAvailableLink")+" "+updateChecker.getLink()));
+					if(updater.getResult().equals(UpdateResult.UPDATE_AVAILABLE)){
+						log.info(ILConfigHandler.mes("onPluginLoad.updateAvailable") + " " + updater.getLatestName().replaceAll("[A-Za-z\\s]", ""));
+						log.info(ILConfigHandler.mes("onPluginLoad.updateAvailableLink") + " " + updater.getLatestFileLink());
 					}
 				}
 			},20L);
