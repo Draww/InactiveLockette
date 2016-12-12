@@ -61,7 +61,7 @@ public class ILMain extends JavaPlugin {
 			Bukkit.getScheduler().runTaskLaterAsynchronously(this, new Runnable () {
 				public void run() {
 
-					Updater updater = new Updater(plugin, 52457, plugin.getFile(), Updater.UpdateType.NO_DOWNLOAD, false);
+					Updater updater = new Updater(plugin, 52457, plugin.getFile(), Updater.UpdateType.DEFAULT, false);
 
 					if(updater.getResult().equals(UpdateResult.UPDATE_AVAILABLE)){
 						log.info(ILConfigHandler.mes("onPluginLoad.updateAvailable") + " " + updater.getLatestName().replaceAll("[A-Za-z\\s]", ""));

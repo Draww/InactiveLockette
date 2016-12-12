@@ -32,7 +32,7 @@ public class ILJoinListener implements Listener{
 					if(updater.getResult().equals(UpdateResult.UPDATE_AVAILABLE)){
 						Player p = e.getPlayer();
 						p.sendMessage(ILConfigHandler.mes("onPluginLoad.updateAvailable") + " " + updater.getLatestName().replaceAll("[A-Za-z\\s]", ""));
-						p.sendMessage(ILConfigHandler.mes("onPluginLoad.updateAvailableLink") + " " + updater.getLatestFileLink());
+						p.sendMessage(ILConfigHandler.mes("onPluginLoad.updateAvailableLink") + " https://dev.bukkit.org/projects/inactive-lockette/files");
 					}
 				}
 			},20L);
