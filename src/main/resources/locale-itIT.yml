@@ -1,0 +1,24 @@
+# InactiveLockette plugin di gvlfm78
+# Traduzione in italiano di gvlfm78
+settingsChat:
+  firstLine: 'Privato'
+  prefix: '&9[InactiveLockette]'
+onPluginLoad:
+  updateAvailable: '&9Una nuova versione è disponibile:'
+  updateAvailableLink: '&9Prendila qui: &7'
+  failedUpdateCheck: 'Qualcosa è andato storto durante la ricerca di aggiornamenti'
+onCommand:
+  reloadConfig: '&aFile di configurazione ricaricato'
+  version: versione
+  noPermission: '&4Non hai il permesso di usare quel comando'
+onPunch:
+  active: '&cIl propietario di questo blocco è ancora attivo'
+  inactive: '&cIl propietario di questo blocco è stato inattivo per %inactivedays% giorni'
+  daysToWait: '&cDevi aspettare altri %daystowait% giorni per aprire questo blocco'
+  noPermission: '&4Non hai il permesso di aprire questo blocco'
+onUnlock:
+  cleared: '&2L''inventario che hai sbloccato è stato svuotato'
+messages:
+  broadcast: '&dIl giocatore %breaker% ha sbloccato un(a) %block% di proprietà di %owner% alle coordinate %coordinates%'
+  moneyWithdraw: '&2Hai rimosso questo blocco per $%cost%. Nuovo bilancio: $%balance%'
+  moneyTransactionFailed: '&cNon hai abbastanza soldi per rimuovere questo blocco.\nTi servono $%cost% per aprire un blocco.\nTu hai $%balance% e ti servono altri $%needed%.'
