@@ -9,7 +9,6 @@ onPluginLoad:
   failedUpdateCheck: 'Something went wrong while trying to check for updates'
 onCommand:
   reloadConfig: '&aConfiguration file reloaded'
-  version: version
   noPermission: '&4You are not allowed to use that command'
 onPunch:
   active: '&cThe owner of this lock is still active'

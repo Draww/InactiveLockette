@@ -9,7 +9,6 @@ onPluginLoad:
   failedUpdateCheck: 'Qualcosa è andato storto durante la ricerca di aggiornamenti'
 onCommand:
   reloadConfig: '&aFile di configurazione ricaricato'
-  version: versione
   noPermission: '&4Non hai il permesso di usare quel comando'
 onPunch:
   active: '&cIl propietario di questo blocco è ancora attivo'

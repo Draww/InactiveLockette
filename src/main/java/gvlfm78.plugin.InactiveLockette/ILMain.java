@@ -1,62 +1,51 @@
 package gvlfm78.plugin.InactiveLockette;
 
-import gvlfm78.plugin.InactiveLockette.Updater.UpdateResult;
-import gvlfm78.plugin.InactiveLockette.listeners.ILJoinListener;
-import gvlfm78.plugin.InactiveLockette.listeners.ILListener;
-import gvlfm78.plugin.InactiveLockette.listeners.ILPListener;
+import gvlfm78.plugin.InactiveLockette.utils.ILConfigHandler;
+import gvlfm78.plugin.InactiveLockette.utils.Messenger;
 import net.milkbowl.vault.economy.Economy;
 import org.bukkit.Bukkit;
+import org.bukkit.event.Listener;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
-import java.util.logging.Logger;
+import java.lang.reflect.Constructor;
 
 public class ILMain extends JavaPlugin {
 
-    private final Logger logger = getLogger();
+    private static final String[] lockettePlugins = {"Lockette", "LockettePro"};
+
+    private static PluginDescriptionFile description;
     public static Economy econ = null;
-    private ILConfigHandler conf = new ILConfigHandler(this); //Getting the instance of the Config Handler
 
     @Override
     public void onEnable(){
+        description = getDescription();
+        Messenger.initialise(this);
+        ILConfigHandler.initialise(this);
 
-        conf.setupConfigYML();//Creates config file if not existant
-        conf.upgradeConfig();
-        conf.setupLocale();//Creates locale file if not existant
+        initialiseLocketteListener();
 
-        PluginManager pm = Bukkit.getServer().getPluginManager();
+        getCommand("inactivelockette").setExecutor(new ILCommandHandler());
 
-        if(pm.isPluginEnabled("Lockette")){
-            pm.registerEvents(new ILListener(this), this);
-            logger.info("Lockette detected, enabling Lockette support");
-        } else if(pm.isPluginEnabled("LockettePro")){
-            pm.registerEvents(new ILPListener(this), this);
-            logger.info("LockettePro detected, enabling LockettePro support");
-        }
+        setupEconomy();
 
-        getCommand("inactivelockette").setExecutor(new ILCommandHandler(this));//Firing commands listener
-
-        setupEconomy();//Setting up the economy
-        if(!setupEconomy() && getConfig().getBoolean("useEconomy")){//If economy is turned on
-            //But no vault is found it will warn the user
-            logger.severe(String.format("[%s] - No Vault dependency found!", getDescription().getName()));
-            return;
-        }
-
-        logger.info(getDescription().getName() + " v" + getDescription().getVersion() + " has been enabled");//Logging to console the enabling of IL
+        Messenger.sendConsoleMessage(description.getName() + " v" + description.getVersion() + " has been enabled");
 
         try{
             Metrics metrics = new Metrics(this);
             metrics.start();
-        } catch(IOException e){
-            //Failed to submit the stats
-        }
+        } catch(IOException ignored){}
+
+        //todo bstats
+
+        //todo spigot & bukkit update checking
+        //Bukkit.getServer().getPluginManager().registerEvents(new ILJoinListener(getFile()), this);
 
         //Update Checking
-        if(getConfig().getBoolean("checkForUpdates")){
+        /*if(getConfig().getBoolean("checkForUpdates")){
             pm.registerEvents(new ILJoinListener(this, this.getFile()), this);
             final ILMain plugin = this;
             Bukkit.getScheduler().runTaskLaterAsynchronously(this, new Runnable() {
@@ -65,19 +54,18 @@ public class ILMain extends JavaPlugin {
                     Updater updater = new Updater(plugin, 52457, plugin.getFile(), Updater.UpdateType.DEFAULT, false);
 
                     if(updater.getResult().equals(UpdateResult.UPDATE_AVAILABLE)){
-                        logger.info(ILConfigHandler.mes("onPluginLoad.updateAvailable") + " " + updater.getLatestName().replaceAll("[A-Za-z\\s]", ""));
-                        logger.info(ILConfigHandler.mes("onPluginLoad.updateAvailableLink") + " " + updater.getLatestFileLink());
+                        Messenger.sendConsoleMessage(ILConfigHandler.mes("onPluginLoad.updateAvailable") + " " + updater.getLatestName().replaceAll("[A-Za-z\\s]", ""));
+                        Messenger.sendConsoleMessage(ILConfigHandler.mes("onPluginLoad.updateAvailableLink") + " " + updater.getLatestFileLink());
                     }
                 }
             }, 20L);
-        }
+        }*/
     }
 
 
     @Override
     public void onDisable(){
-        PluginDescriptionFile pdfFile = this.getDescription();
-        logger.info(pdfFile.getName() + " " + pdfFile.getVersion() + " has been disabled");
+        Messenger.sendConsoleMessage(description.getName() + " " + description.getVersion() + " has been disabled");
     }
 
     private boolean setupEconomy(){//Setting up the economy
@@ -88,5 +76,28 @@ public class ILMain extends JavaPlugin {
 
         econ = rsp.getProvider();
         return econ != null;
+    }
+
+    private void initialiseLocketteListener(){
+        PluginManager pm = Bukkit.getServer().getPluginManager();
+
+        for(String lockettePlugin : lockettePlugins){
+            if(!pm.isPluginEnabled(lockettePlugin)) continue;
+
+            try{
+                Class<?> clazz = Class.forName(lockettePlugin + "Listener");
+                Constructor<?> constructor = clazz.getConstructor();
+                Listener listener = (Listener) constructor.newInstance();
+
+                pm.registerEvents(listener, this);
+            } catch (Exception e){
+                Messenger.sendConsoleErrorMessage("Could not load " + lockettePlugin + " listener!");
+            }
+
+            Messenger.sendConsoleMessage(lockettePlugin + " detected, enabling " + lockettePlugin + " support");
+        }
+    }
+    public static PluginDescriptionFile getDescriptionFile(){
+        return description;
     }
 }

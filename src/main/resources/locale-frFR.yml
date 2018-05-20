@@ -10,7 +10,6 @@ onPluginLoad:
   failedUpdateCheck: 'Quelque-chose est allait mal en essayant de vérifier les mises à jour'
 onCommand:
   reloadConfig: '&aFichier de configuration rechargé'
-  version: version
   noPermission: '&4Vous ne pouvez pas utiliser cette commande'
 onPunch:
   active: '&cLe propriétaire de cette serrure est encore actif'
