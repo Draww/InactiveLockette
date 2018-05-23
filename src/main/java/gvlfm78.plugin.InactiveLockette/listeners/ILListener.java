@@ -5,14 +5,21 @@ import gvlfm78.plugin.InactiveLockette.utils.ILConfigHandler;
 import gvlfm78.plugin.InactiveLockette.utils.Messenger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
+import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
 
 import java.text.DecimalFormat;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public abstract class ILListener implements Listener {
@@ -21,7 +28,7 @@ public abstract class ILListener implements Listener {
         //Block is block the sign was attached on
         if(ILConfigHandler.config.getBoolean("clearItems")){
             String mat = block.getType().toString().toLowerCase();
-            switch(mat){//Chest, trapped chest, furnace, dispenser, dropper, brewing stand, hopper,
+            switch(mat){
                 case "chest":
                 case "trapped_chest":
                 case "furnace":
@@ -31,7 +38,7 @@ public abstract class ILListener implements Listener {
                 case "hopper":
                     InventoryHolder ih = (InventoryHolder) block.getState();
                     ih.getInventory().clear();
-                    Messenger.sendCommandSenderMessage(player, "onUnlock.cleared");
+                    Messenger.sendPlayerMessage(player, "onUnlock.cleared");
                     break;
             }
         }
@@ -48,13 +55,13 @@ public abstract class ILListener implements Listener {
             DecimalFormat df = new DecimalFormat("0.00");
             String moneyCost = df.format(cost);
             String newBalance = df.format(ILMain.econ.getBalance(p));
-            Messenger.sendCommandSenderMessage(p, "messages.moneyWithdraw","%cost%", moneyCost,"%balance%", newBalance);
+            Messenger.sendPlayerMessage(p, "messages.moneyWithdraw","%cost%", moneyCost,"%balance%", newBalance);
         } else {//Player is poor
             DecimalFormat df = new DecimalFormat("0.00");
             String moneyNeeded = df.format(cost - balance);
             String moneyCost = df.format(cost);
             String newBalance = df.format(ILMain.econ.getBalance(p));
-            Messenger.sendCommandSenderMessage(p, "messages.moneyTransactionFailed","%cost%", moneyCost,"%balance%", newBalance,"%needed%", moneyNeeded);
+            Messenger.sendPlayerMessage(p, "messages.moneyTransactionFailed","%cost%", moneyCost,"%balance%", newBalance,"%needed%", moneyNeeded);
         }
     }
 
@@ -82,14 +89,14 @@ public abstract class ILListener implements Listener {
     }
 
     protected void ownerStillActive(Player player, long inactivityDays){
-        Messenger.sendCommandSenderMessage(player, "onPunch.active");
+        Messenger.sendPlayerMessage(player, "onPunch.active");
 
         if(ILConfigHandler.config.getBoolean("onClickDisplayDays"))
-            Messenger.sendCommandSenderMessage(player, "onPunch.inactive","%inactivedays%", Long.toString(inactivityDays));
+            Messenger.sendPlayerMessage(player, "onPunch.inactive","%inactivedays%", Long.toString(inactivityDays));
 
         if(ILConfigHandler.config.getBoolean("onClickDisplayDaysToWait")){
             long daysToWait = ILConfigHandler.config.getInt("daysOfInactivity") - inactivityDays;
-            Messenger.sendCommandSenderMessage(player, "onPunch.daysToWait","%daystowait%", Long.toString(daysToWait));
+            Messenger.sendPlayerMessage(player, "onPunch.daysToWait","%daystowait%", Long.toString(daysToWait));
         }
     }
 
@@ -110,23 +117,110 @@ public abstract class ILListener implements Listener {
         return System.currentTimeMillis() - op.getLastPlayed();
     }
 
-    protected boolean isOverlyInactive(OfflinePlayer op){
+    protected boolean isInactive(OfflinePlayer op){
         return getInactivityTime(op) / 86400000 > ILConfigHandler.config.getLong("daysOfInactivity");
     }
 
     @SuppressWarnings("deprecation")
-    protected boolean isOverlyInactive(String s){
-        return isOverlyInactive(Bukkit.getOfflinePlayer(s));
+    protected boolean isInactive(String s){
+        return isInactive(Bukkit.getOfflinePlayer(s));
     }
 
-    protected boolean isOverlyInactive(UUID uuid){
-        return isOverlyInactive(Bukkit.getOfflinePlayer(uuid));
+    protected boolean isInactive(UUID uuid){
+        return isInactive(Bukkit.getOfflinePlayer(uuid));
     }
 
-    //This method was only in lockette listener
     protected boolean isBlackListed(UUID ownerUUID){
         List<?> list = ILConfigHandler.config.getList("list");
         if(list == null || list.isEmpty()) return false;
         return list.contains(ownerUUID) || list.contains(ownerUUID.toString());
+    }
+    //Get active player UUIDs from sign
+	/*	private ArrayList<OfflinePlayer> getActivePlayersUUID(Sign s){
+		String[] lines = s.getLines();
+		ArrayList<OfflinePlayer> names = new ArrayList<OfflinePlayer>();
+
+		for(int i = 0; i < lines.length; i++){
+			UUID uuid = getUUIDFromMeta(s,i);
+			if(isInactive(uuid)){
+				names.add(Bukkit.getOfflinePlayer(uuid));
+			}
+		}
+		return names;
+	}
+
+	//Get active player names from sign
+	@SuppressWarnings("deprecation")
+	private ArrayList<OfflinePlayer> getActivePlayersNames(Sign s){
+
+		String[] lines = s.getLines();
+		ArrayList<OfflinePlayer> names = new ArrayList<OfflinePlayer>();
+
+		for(String line : lines){
+			if(isInactive(line)){
+				names.add(Bukkit.getOfflinePlayer((line)));
+			}
+		}
+		return names;
+	}*/
+
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
+    public void onPlayerInteract(PlayerInteractEvent event){
+        if(event.getAction() != Action.LEFT_CLICK_BLOCK) return;
+
+        Block block = event.getClickedBlock();
+        if(block.getType() != Material.WALL_SIGN) return;
+        //Player Left Clicked a wall sign
+
+        Sign sign = (Sign) block.getState();
+        String[] lines = sign.getLines();
+        String line1 = lines[0];
+
+        if(!line1.equalsIgnoreCase("[Private]") &&
+                !line1.equalsIgnoreCase(
+                        "[" + ILConfigHandler.config.getString("settingsChat.firstLine") + "]")) return;
+
+        Player player = event.getPlayer();
+
+        if(hasPermissionToOpenLocks(player))
+            handleLeftClick(player, lines, block, sign);
+        else
+            Messenger.sendPlayerMessage(player, "onPunch.noPermission");
+    }
+
+    private boolean hasPermissionToOpenLocks(Player player){
+        return !isBlackListed(player.getUniqueId()) &&
+                !ILConfigHandler.config.getBoolean("permissionToOpenLocks") ||
+                player.hasPermission("inactivelockette.player") ||
+                player.hasPermission("inactivelockette.*") ||
+                player.hasPermission("inactivelockette.admin");
+    }
+
+    protected abstract void handleLeftClick(Player player, String[] lines, Block signBlock, Sign sign);
+
+    protected void performInactivityChecks(String ownerName, Player player, Block signBlock, Block attachedBlock, Optional<UUID> ownerUUID){
+        boolean ownerUUIDPresent = ownerUUID.isPresent();
+        boolean isInactive;
+        if(ownerUUIDPresent) isInactive = isInactive(ownerUUID.get());
+        else isInactive = isInactive(ownerName);
+
+        if(!isInactive){
+            if(ownerUUIDPresent)
+                ownerStillActive(player, getInactivityDays(ownerUUID.get()));
+            else ownerStillActive(player, getInactivityDays(ownerName));
+            return;
+        }
+
+        //If economy is enabled and they have the money, make them pay
+        makeUserPay(player);
+
+        //Empty the container
+        clearContainer(attachedBlock, player);
+
+        //Break sign
+        signBlock.breakNaturally();
+
+        //Broadcast to whole server
+        broadcast(attachedBlock, player.getName(), ownerName);
     }
 }

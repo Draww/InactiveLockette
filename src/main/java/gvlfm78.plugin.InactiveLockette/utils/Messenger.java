@@ -26,10 +26,10 @@ public class Messenger {
         plugin.getLogger().severe("[InactiveLockette]" + error);
     }
 
-    /*private static void sendCommandSenderMessage(CommandSender sender, String message){
+    /*private static void sendPlayerMessage(CommandSender sender, String message){
         sender.sendMessage(colourise(message));
     }*/
-    public static void sendCommandSenderMessage(CommandSender sender, String path, String... replacements){
+    public static void sendPlayerMessage(CommandSender sender, String path, String... replacements){
         String mes = locale.getString(path);
         performReplacements(mes, replacements);
 

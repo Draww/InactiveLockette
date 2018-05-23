@@ -27,13 +27,12 @@ broadcast: true
 permissionToOpenLocks: true
 # If the plugin should use economy
 useEconomy: false
-# Cost the player pays every time they break open a container
-# if economy is enabled
+# Cost the player pays every time they break open a container if economy is enabled
 cost: 500.0
 # If the plugin should check for updates
 checkForUpdates: true
 # List of people whose locks will not be allowed to be opened
-# Example list: [gvlfm78] Another example list: [gvlfm78,8cd16032-c3d5-35a0-8c41-a9fd41178779,BestPlayer]
+# Example list: [gvlfm78,8cd16032-c3d5-35a0-8c41-a9fd41178779,BestPlayer]
 list: []
 
 
