@@ -16,8 +16,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.metadata.MetadataValue;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -135,34 +137,6 @@ public abstract class ILListener implements Listener {
         if(list == null || list.isEmpty()) return false;
         return list.contains(ownerUUID) || list.contains(ownerUUID.toString());
     }
-    //Get active player UUIDs from sign
-	/*	private ArrayList<OfflinePlayer> getActivePlayersUUID(Sign s){
-		String[] lines = s.getLines();
-		ArrayList<OfflinePlayer> names = new ArrayList<OfflinePlayer>();
-
-		for(int i = 0; i < lines.length; i++){
-			UUID uuid = getUUIDFromMeta(s,i);
-			if(isInactive(uuid)){
-				names.add(Bukkit.getOfflinePlayer(uuid));
-			}
-		}
-		return names;
-	}
-
-	//Get active player names from sign
-	@SuppressWarnings("deprecation")
-	private ArrayList<OfflinePlayer> getActivePlayersNames(Sign s){
-
-		String[] lines = s.getLines();
-		ArrayList<OfflinePlayer> names = new ArrayList<OfflinePlayer>();
-
-		for(String line : lines){
-			if(isInactive(line)){
-				names.add(Bukkit.getOfflinePlayer((line)));
-			}
-		}
-		return names;
-	}*/
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onPlayerInteract(PlayerInteractEvent event){
@@ -179,6 +153,12 @@ public abstract class ILListener implements Listener {
         if(!line1.equalsIgnoreCase("[Private]") &&
                 !line1.equalsIgnoreCase(
                         "[" + ILConfigHandler.config.getString("settingsChat.firstLine") + "]")) return;
+
+        //todo maybe get [] text directly from the plugins:
+        /*
+        if(text.equals("[private]") || text.equalsIgnoreCase(Lockette.altPrivate)) privateSign = true;
+        else if(text.equals("[more users]") || text.equalsIgnoreCase(Lockette.altMoreUsers)){
+         */
 
         Player player = event.getPlayer();
 
@@ -211,6 +191,15 @@ public abstract class ILListener implements Listener {
             return;
         }
 
+        if(ILConfigHandler.config.getBoolean("onlyCheckFirstName")){
+            removeLock(ownerName, player, signBlock, attachedBlock);
+            return;
+        }
+
+        //Get all other players on sign and on more users sign
+    }
+
+    private void removeLock(String ownerName, Player player, Block signBlock, Block attachedBlock){
         //If economy is enabled and they have the money, make them pay
         makeUserPay(player);
 
@@ -222,5 +211,38 @@ public abstract class ILListener implements Listener {
 
         //Broadcast to whole server
         broadcast(attachedBlock, player.getName(), ownerName);
+    }
+
+    private ArrayList<OfflinePlayer> getPlayersFromSign(Sign sign){
+        ArrayList<OfflinePlayer> players = new ArrayList<>();
+        //Only check line indices 1,2,3
+        String [] lines = sign.getLines();
+
+        if(isUUIDSign(sign)){
+            for(int index = 0; index < 4; index++)
+                players.add(getPlayerFromUUIDLine(sign, index));
+        }
+        else {
+            for(String line : lines)
+                players.add(getPlayerFromNameLine(line));
+        }
+
+        return players;
+    }
+
+    protected abstract boolean isUUIDSign(Sign sign);
+    protected abstract OfflinePlayer getPlayerFromNameLine(String line);
+    protected abstract OfflinePlayer getPlayerFromUUIDLine(Sign sign, int index);
+
+    /**
+     * Method from Lockette to get player UUID from sign metadata
+     */
+    protected static UUID LockettegetUUIDFromMeta(Sign sign, int index){
+        if (!sign.hasMetadata("LocketteUUIDs") || !(sign.getMetadata("LocketteUUIDs").size() > 0))
+            return null;
+
+        List<MetadataValue> list = sign.getMetadata("LocketteUUIDs");
+        UUID uuid = ((UUID[]) list.get(0).value())[index - 1];
+        return uuid;
     }
 }
