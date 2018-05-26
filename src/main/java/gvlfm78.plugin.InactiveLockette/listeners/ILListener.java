@@ -3,9 +3,9 @@ package gvlfm78.plugin.InactiveLockette.listeners;
 import gvlfm78.plugin.InactiveLockette.ILMain;
 import gvlfm78.plugin.InactiveLockette.utils.ILConfigHandler;
 import gvlfm78.plugin.InactiveLockette.utils.Messenger;
+import gvlfm78.plugin.InactiveLockette.utils.Utilities;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
@@ -16,33 +16,32 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.InventoryHolder;
-import org.bukkit.metadata.MetadataValue;
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 public abstract class ILListener implements Listener {
 
+    /**
+     * Clear the contents of a container
+     * @param block The container block the sign was attached to
+     * @param player The player that has broken the lock
+     */
     protected void clearContainer(Block block, Player player){
-        //Block is block the sign was attached on
-        if(ILConfigHandler.config.getBoolean("clearItems")){
-            String mat = block.getType().toString().toLowerCase();
-            switch(mat){
-                case "chest":
-                case "trapped_chest":
-                case "furnace":
-                case "dispenser":
-                case "dropper":
-                case "brewing_stand":
-                case "hopper":
-                    InventoryHolder ih = (InventoryHolder) block.getState();
-                    ih.getInventory().clear();
-                    Messenger.sendPlayerMessage(player, "onUnlock.cleared");
-                    break;
-            }
+        if(!ILConfigHandler.config.getBoolean("clearItems")) return;
+        String mat = block.getType().toString().toLowerCase();
+        switch(mat){
+            case "chest":
+            case "trapped_chest":
+            case "furnace":
+            case "dispenser":
+            case "dropper":
+            case "brewing_stand":
+            case "hopper":
+                InventoryHolder ih = (InventoryHolder) block.getState();
+                ih.getInventory().clear();
+                Messenger.sendPlayerMessage(player, "onUnlock.cleared");
+                break;
         }
     }
 
@@ -143,29 +142,84 @@ public abstract class ILListener implements Listener {
         if(event.getAction() != Action.LEFT_CLICK_BLOCK) return;
 
         Block block = event.getClickedBlock();
-        if(block.getType() != Material.WALL_SIGN) return;
+        if(!Utilities.isSign(block)) return;
         //Player Left Clicked a wall sign
 
-        Sign sign = (Sign) block.getState();
-        String[] lines = sign.getLines();
-        String line1 = lines[0];
-
-        if(!line1.equalsIgnoreCase("[Private]") &&
-                !line1.equalsIgnoreCase(
-                        "[" + ILConfigHandler.config.getString("settingsChat.firstLine") + "]")) return;
-
-        //todo maybe get [] text directly from the plugins:
-        /*
-        if(text.equals("[private]") || text.equalsIgnoreCase(Lockette.altPrivate)) privateSign = true;
-        else if(text.equals("[more users]") || text.equalsIgnoreCase(Lockette.altMoreUsers)){
-         */
+        Sign sign = Utilities.blockToSign(block);
+        if(!Utilities.isPrivateSign(sign)) return;
 
         Player player = event.getPlayer();
 
-        if(hasPermissionToOpenLocks(player))
-            handleLeftClick(player, lines, block, sign);
-        else
+        if(!hasPermissionToOpenLocks(player)){
             Messenger.sendPlayerMessage(player, "onPunch.noPermission");
+            return;
+        }
+
+        boolean isUUIDSign = isUUIDSign(sign);
+        OfflinePlayer owner;
+        if(isUUIDSign) owner = getPlayerFromUUIDLine(sign,0);
+        else owner = getPlayerFromNameLine(sign.getLine(0));
+
+        if(!isInactive(owner)){ //Owner is still active
+            ownerStillActive(player, getInactivityDays(owner));
+            return;
+        }
+
+        //Owner is inactive
+        if(ILConfigHandler.config.getBoolean("onlyCheckFirstName")){
+            removeLock(owner.getName(), player, block, block.getRelative(((org.bukkit.material.Sign) sign).getAttachedFace()));
+            return;
+        }
+        
+        //Find all [more users] signs
+        ArrayList<Sign> signs = new ArrayList<>();
+        signs.add(sign); //Add the [Private] sign
+        
+        signs.addAll(Utilities.findMoreUsersSigns(block));
+
+        HashMap<OfflinePlayer,Sign> players = new HashMap<>();
+        for(Sign currentSign : signs){
+            for(OfflinePlayer offlinePlayer : getPlayersFromSign(sign, isUUIDSign))
+                players.put(offlinePlayer, currentSign);
+        }
+
+        //Remove owner as we already know s/he is inactive
+        players.remove(owner);
+
+        //Remove inactive players
+        for(OfflinePlayer offlinePlayer : players.keySet()){
+            if(isInactive(offlinePlayer))
+                players.remove(offlinePlayer);
+        }
+
+        //Loop through signs and place each player in sequential order
+        Queue<OfflinePlayer> playerQueue= new ArrayDeque<>(players.keySet());
+
+        for(Sign currentSign : signs){
+            for(int i = 1; i < 4; i++){
+                OfflinePlayer op = playerQueue.poll();
+
+                if(op == null){ //the queue is empty
+                    if(i == 1) currentSign.getBlock().breakNaturally(); //Sign is empty so no longer needed
+                    continue; //Instead of return so other now empty signs are also broken
+                }
+
+                String name = op.getName();
+                if(isUUIDSign)
+                    sign.setLine(i, name);
+                else{
+                    if(this instanceof LocketteListener){
+                        LocketteListener ll = (LocketteListener) this;
+                        ll.setUUIDCompatibleSignLine(sign,i,name,op);
+                    }
+                    else { //instance of LocketteProListener
+                        LocketteProListener lpl = (LocketteProListener) this;
+                        lpl.setUUIDCompatibleSignLine(name,op.getUniqueId());
+                    }
+                }
+            }
+            //todo might need sign.update()
+        }
     }
 
     private boolean hasPermissionToOpenLocks(Player player){
@@ -174,29 +228,6 @@ public abstract class ILListener implements Listener {
                 player.hasPermission("inactivelockette.player") ||
                 player.hasPermission("inactivelockette.*") ||
                 player.hasPermission("inactivelockette.admin");
-    }
-
-    protected abstract void handleLeftClick(Player player, String[] lines, Block signBlock, Sign sign);
-
-    protected void performInactivityChecks(String ownerName, Player player, Block signBlock, Block attachedBlock, Optional<UUID> ownerUUID){
-        boolean ownerUUIDPresent = ownerUUID.isPresent();
-        boolean isInactive;
-        if(ownerUUIDPresent) isInactive = isInactive(ownerUUID.get());
-        else isInactive = isInactive(ownerName);
-
-        if(!isInactive){
-            if(ownerUUIDPresent)
-                ownerStillActive(player, getInactivityDays(ownerUUID.get()));
-            else ownerStillActive(player, getInactivityDays(ownerName));
-            return;
-        }
-
-        if(ILConfigHandler.config.getBoolean("onlyCheckFirstName")){
-            removeLock(ownerName, player, signBlock, attachedBlock);
-            return;
-        }
-
-        //Get all other players on sign and on more users sign
     }
 
     private void removeLock(String ownerName, Player player, Block signBlock, Block attachedBlock){
@@ -214,11 +245,15 @@ public abstract class ILListener implements Listener {
     }
 
     private ArrayList<OfflinePlayer> getPlayersFromSign(Sign sign){
+        return getPlayersFromSign(sign, isUUIDSign(sign));
+    }
+
+    private ArrayList<OfflinePlayer> getPlayersFromSign(Sign sign, boolean isUUIDSign){
         ArrayList<OfflinePlayer> players = new ArrayList<>();
         //Only check line indices 1,2,3
         String [] lines = sign.getLines();
 
-        if(isUUIDSign(sign)){
+        if(isUUIDSign){
             for(int index = 0; index < 4; index++)
                 players.add(getPlayerFromUUIDLine(sign, index));
         }
@@ -233,16 +268,4 @@ public abstract class ILListener implements Listener {
     protected abstract boolean isUUIDSign(Sign sign);
     protected abstract OfflinePlayer getPlayerFromNameLine(String line);
     protected abstract OfflinePlayer getPlayerFromUUIDLine(Sign sign, int index);
-
-    /**
-     * Method from Lockette to get player UUID from sign metadata
-     */
-    protected static UUID LockettegetUUIDFromMeta(Sign sign, int index){
-        if (!sign.hasMetadata("LocketteUUIDs") || !(sign.getMetadata("LocketteUUIDs").size() > 0))
-            return null;
-
-        List<MetadataValue> list = sign.getMetadata("LocketteUUIDs");
-        UUID uuid = ((UUID[]) list.get(0).value())[index - 1];
-        return uuid;
-    }
 }
