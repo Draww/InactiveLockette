@@ -9,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -150,7 +151,7 @@ public abstract class ILListener implements Listener {
 
         Player player = event.getPlayer();
 
-        if(!hasPermissionToOpenLocks(player)){
+        if(!hasPermissionToOpenLocks(player, block)){
             Messenger.sendPlayerMessage(player, "onPunch.noPermission");
             return;
         }
@@ -170,11 +171,11 @@ public abstract class ILListener implements Listener {
             removeLock(owner.getName(), player, block, block.getRelative(((org.bukkit.material.Sign) sign).getAttachedFace()));
             return;
         }
-        
+
         //Find all [more users] signs
         ArrayList<Sign> signs = new ArrayList<>();
         signs.add(sign); //Add the [Private] sign
-        
+
         signs.addAll(Utilities.findMoreUsersSigns(block));
 
         HashMap<OfflinePlayer,Sign> players = new HashMap<>();
@@ -222,7 +223,16 @@ public abstract class ILListener implements Listener {
         }
     }
 
-    private boolean hasPermissionToOpenLocks(Player player){
+    private boolean hasPermissionToOpenLocks(Player player, Block block){
+        FileConfiguration config = ILConfigHandler.config;
+        if(config.getBoolean("breakLockIfRegionOwner")){
+            if(!Utilities.isPlayerBlockOwner(player, block)) return false;
+        }
+
+        if(config.getBoolean("breakLockIfCanBuild")){
+            if(!Utilities.getWorldGuard().canBuild(player, block)) return false;
+        }
+
         return !isBlackListed(player.getUniqueId()) &&
                 !ILConfigHandler.config.getBoolean("permissionToOpenLocks") ||
                 player.hasPermission("inactivelockette.player") ||
@@ -242,10 +252,6 @@ public abstract class ILListener implements Listener {
 
         //Broadcast to whole server
         broadcast(attachedBlock, player.getName(), ownerName);
-    }
-
-    private ArrayList<OfflinePlayer> getPlayersFromSign(Sign sign){
-        return getPlayersFromSign(sign, isUUIDSign(sign));
     }
 
     private ArrayList<OfflinePlayer> getPlayersFromSign(Sign sign, boolean isUUIDSign){

@@ -31,6 +31,12 @@ broadcast: true
 # inactivelockette.player before allowing them to open the lock
 permissionToOpenLocks: true
 
+# Only allow user to break lock if they are the owner of the WorldGuard region the block is in
+breakLockIfRegionOwner: false
+
+# Only allow user to break lock if they have WorldGuard BUILD permission for the region the block is in
+breakLockIfCanBuild: false
+
 # If the plugin should use economy
 useEconomy: false
 

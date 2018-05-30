@@ -15,10 +15,6 @@
 
     <repositories>
         <repository>
-            <id>sk89q-repo</id>
-            <url>http://maven.sk89q.com/repo/</url>
-        </repository>
-        <repository>
             <id>spigot-repo</id>
             <url>http://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
         </repository>
@@ -33,6 +29,10 @@
         <repository>
             <id>bstats-repo</id>
             <url>http://repo.bstats.org/content/repositories/releases/</url>
+        </repository>
+        <repository>
+            <id>sk89q-repo</id>
+            <url>http://maven.sk89q.com/repo/</url>
         </repository>
     </repositories>
 
@@ -64,12 +64,6 @@
             <groupId>com.sk89q.worldedit</groupId>
             <artifactId>worldedit-core</artifactId>
             <version>6.1.4-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.sk89q.worldedit</groupId>
-            <artifactId>worldedit-bukkit</artifactId>
-            <version>6.1.5</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

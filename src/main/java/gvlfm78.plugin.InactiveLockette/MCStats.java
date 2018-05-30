@@ -46,7 +46,7 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.zip.GZIPOutputStream;
 
-public class Metrics {
+public class MCStats {
 
     /**
      * The current revision number
@@ -108,7 +108,7 @@ public class Metrics {
      */
     private volatile BukkitTask task = null;
 
-    public Metrics(final Plugin plugin) throws IOException{
+    public MCStats(final Plugin plugin) throws IOException{
         if(plugin == null){
             throw new IllegalArgumentException("Plugin cannot be null");
         }
@@ -219,7 +219,7 @@ public class Metrics {
                         firstPost = false;
                     } catch(IOException e){
                         if(debug){
-                            Bukkit.getLogger().log(Level.INFO, "[Metrics] " + e.getMessage());
+                            Bukkit.getLogger().log(Level.INFO, "[MCStats] " + e.getMessage());
                         }
                     }
                 }
@@ -241,12 +241,12 @@ public class Metrics {
                 configuration.load(getConfigFile());
             } catch(IOException ex){
                 if(debug){
-                    Bukkit.getLogger().log(Level.INFO, "[Metrics] " + ex.getMessage());
+                    Bukkit.getLogger().log(Level.INFO, "[MCStats] " + ex.getMessage());
                 }
                 return true;
             } catch(InvalidConfigurationException ex){
                 if(debug){
-                    Bukkit.getLogger().log(Level.INFO, "[Metrics] " + ex.getMessage());
+                    Bukkit.getLogger().log(Level.INFO, "[MCStats] " + ex.getMessage());
                 }
                 return true;
             }
@@ -329,7 +329,7 @@ public class Metrics {
             }
         } catch(Exception ex){
             if(debug){
-                Bukkit.getLogger().log(Level.INFO, "[Metrics] " + ex.getMessage());
+                Bukkit.getLogger().log(Level.INFO, "[MCStats] " + ex.getMessage());
             }
         }
 
@@ -456,7 +456,7 @@ public class Metrics {
         connection.setDoOutput(true);
 
         if(debug){
-            System.out.println("[Metrics] Prepared request for " + pluginName + " uncompressed=" + uncompressed.length + " compressed=" + compressed.length);
+            System.out.println("[MCStats] Prepared request for " + pluginName + " uncompressed=" + uncompressed.length + " compressed=" + compressed.length);
         }
 
         // Write the data

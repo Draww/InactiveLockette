@@ -1,9 +1,17 @@
 package gvlfm78.plugin.InactiveLockette.utils;
 
+import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
+import com.sk89q.worldguard.protection.ApplicableRegionSet;
+import com.sk89q.worldguard.protection.managers.RegionManager;
+import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.block.Sign;
+import org.bukkit.entity.Player;
+import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
 import java.util.function.Consumer;
@@ -90,5 +98,31 @@ public class Utilities {
         for(String text : texts)
             if(firstLine.equalsIgnoreCase(text)) return true;
         return false;
+    }
+
+    public static WorldGuardPlugin getWorldGuard(){
+        Plugin p = Bukkit.getServer().getPluginManager().getPlugin("WorldGuard");
+
+        if (p instanceof WorldGuardPlugin) return (WorldGuardPlugin) p;
+        else return null;
+    }
+
+    public static boolean isPlayerRegionOwner(Player player, ProtectedRegion protectedRegion){
+        return protectedRegion.getOwners().contains(player.getUniqueId());
+    }
+
+    public static ApplicableRegionSet getRegionsFromLocation(Location location){
+        WorldGuardPlugin wg = Utilities.getWorldGuard();
+        RegionManager rm = wg.getRegionManager(location.getWorld());
+        return rm.getApplicableRegions(location);
+    }
+
+    public static boolean isPlayerBlockOwner(Player player, Block block){
+        boolean found = false;
+        for(ProtectedRegion protectedRegion : getRegionsFromLocation(block.getLocation())){
+            if(protectedRegion.getOwners().contains(player.getUniqueId()))
+                found = true;
+        }
+        return found;
     }
 }

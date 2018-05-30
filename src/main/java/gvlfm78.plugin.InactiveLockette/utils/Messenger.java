@@ -23,12 +23,9 @@ public class Messenger {
     }
 
     public static void sendConsoleErrorMessage(String error){
-        plugin.getLogger().severe("[InactiveLockette]" + error);
+        plugin.getLogger().severe("[InactiveLockette] " + error);
     }
 
-    /*private static void sendPlayerMessage(CommandSender sender, String message){
-        sender.sendMessage(colourise(message));
-    }*/
     public static void sendPlayerMessage(CommandSender sender, String path, String... replacements){
         String mes = locale.getString(path);
         performReplacements(mes, replacements);
@@ -45,6 +42,12 @@ public class Messenger {
         String message = locale.getString(path);
         performReplacements(message, replacements);
         Bukkit.broadcastMessage(message);
+    }
+
+    public static String getLocalisedMessage(String path, String... replacements){
+        String message = locale.getString(path);
+        performReplacements(message, replacements);
+        return message;
     }
 
     private static void performReplacements(String message, String[] replacements){

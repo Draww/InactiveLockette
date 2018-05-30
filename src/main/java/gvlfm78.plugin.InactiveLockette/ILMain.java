@@ -1,21 +1,26 @@
 package gvlfm78.plugin.InactiveLockette;
 
+import gvlfm78.plugin.InactiveLockette.listeners.ILListener;
+import gvlfm78.plugin.InactiveLockette.listeners.LocketteListener;
+import gvlfm78.plugin.InactiveLockette.listeners.LocketteProListener;
+import gvlfm78.plugin.InactiveLockette.updates.ILUpdateListener;
 import gvlfm78.plugin.InactiveLockette.utils.ILConfigHandler;
 import gvlfm78.plugin.InactiveLockette.utils.Messenger;
 import net.milkbowl.vault.economy.Economy;
+import org.bstats.bukkit.Metrics;
 import org.bukkit.Bukkit;
-import org.bukkit.event.Listener;
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.PluginDescriptionFile;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 
 public class ILMain extends JavaPlugin {
 
     private static final String[] lockettePlugins = {"Lockette", "LockettePro"};
+    private static final ILListener[] locketteListeners = {new LocketteListener(), new LocketteProListener()};
 
     private static PluginDescriptionFile description;
     public static Economy econ = null;
@@ -23,8 +28,8 @@ public class ILMain extends JavaPlugin {
     @Override
     public void onEnable(){
         description = getDescription();
-        Messenger.initialise(this);
         ILConfigHandler.initialise(this);
+        Messenger.initialise(this);
 
         initialiseLocketteListener();
 
@@ -32,34 +37,23 @@ public class ILMain extends JavaPlugin {
 
         setupEconomy();
 
+        setupWorldGuard();
+
         Messenger.sendConsoleMessage(description.getName() + " v" + description.getVersion() + " has been enabled");
 
+        //MCStats
         try{
-            Metrics metrics = new Metrics(this);
-            metrics.start();
+            MCStats MCStats = new MCStats(this);
+            MCStats.start();
         } catch(IOException ignored){}
 
-        //todo bstats
+        //bStats
+        Metrics metrics = new Metrics(this);
 
-        //todo spigot & bukkit update checking
-        //Bukkit.getServer().getPluginManager().registerEvents(new ILJoinListener(getFile()), this);
-
-        //Update Checking
-        /*if(getConfig().getBoolean("checkForUpdates")){
-            pm.registerEvents(new ILJoinListener(this, this.getFile()), this);
-            final ILMain plugin = this;
-            Bukkit.getScheduler().runTaskLaterAsynchronously(this, new Runnable() {
-                public void run(){
-
-                    Updater updater = new Updater(plugin, 52457, plugin.getFile(), Updater.UpdateType.DEFAULT, false);
-
-                    if(updater.getResult().equals(UpdateResult.UPDATE_AVAILABLE)){
-                        Messenger.sendConsoleMessage(ILConfigHandler.mes("onPluginLoad.updateAvailable") + " " + updater.getLatestName().replaceAll("[A-Za-z\\s]", ""));
-                        Messenger.sendConsoleMessage(ILConfigHandler.mes("onPluginLoad.updateAvailableLink") + " " + updater.getLatestFileLink());
-                    }
-                }
-            }, 20L);
-        }*/
+        //Checking for updates
+        if(getConfig().getBoolean("checkForUpdates", true)){
+            getServer().getPluginManager().registerEvents((new ILUpdateListener(this, this.getFile())), this);
+        }
     }
 
 
@@ -68,7 +62,7 @@ public class ILMain extends JavaPlugin {
         Messenger.sendConsoleMessage(description.getName() + " " + description.getVersion() + " has been disabled");
     }
 
-    private boolean setupEconomy(){//Setting up the economy
+    private boolean setupEconomy(){
         if(getServer().getPluginManager().getPlugin("Vault") == null) return false;
 
         RegisteredServiceProvider<Economy> rsp = getServer().getServicesManager().getRegistration(Economy.class);
@@ -78,23 +72,24 @@ public class ILMain extends JavaPlugin {
         return econ != null;
     }
 
+    private boolean setupWorldGuard(){
+        FileConfiguration config = getConfig();
+        if( (config.getBoolean("breakLockIfRegionOwner") || config.getBoolean("breakLockIfCanBuild"))
+                && getServer().getPluginManager().getPlugin("WorldGuard") == null){
+            Messenger.sendConsoleErrorMessage("You have enabled WorldGuard features but WorldGuard was not detected!");
+            return false;
+        }
+        return true;
+    }
+
     private void initialiseLocketteListener(){
         PluginManager pm = Bukkit.getServer().getPluginManager();
 
-        for(String lockettePlugin : lockettePlugins){
+        for(int i = 0; i < lockettePlugins.length; i++){
+            String lockettePlugin = lockettePlugins[i];
             if(!pm.isPluginEnabled(lockettePlugin)) continue;
-
-            try{
-                Class<?> clazz = Class.forName(lockettePlugin + "Listener");
-                Constructor<?> constructor = clazz.getConstructor();
-                Listener listener = (Listener) constructor.newInstance();
-
-                pm.registerEvents(listener, this);
-            } catch (Exception e){
-                Messenger.sendConsoleErrorMessage("Could not load " + lockettePlugin + " listener!");
-            }
-
             Messenger.sendConsoleMessage(lockettePlugin + " detected, enabling " + lockettePlugin + " support");
+            pm.registerEvents(locketteListeners[i], this);
         }
     }
     public static PluginDescriptionFile getDescriptionFile(){
