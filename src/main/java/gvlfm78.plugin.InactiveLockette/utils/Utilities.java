@@ -51,7 +51,7 @@ public class Utilities {
         ArrayList<Sign> signs = new ArrayList<>();
 
         iterateAroundBlock(block, (relativeBlock -> {
-            if(isSign(block)){
+            if(isSign(relativeBlock)){
                 Sign sign = blockToSign(relativeBlock);
                 if(isMoreUsersSign(sign))
                     signs.add(sign);
@@ -77,7 +77,7 @@ public class Utilities {
     }
 
     public static boolean isSign(Block block){
-        return block.getType() != Material.WALL_SIGN;
+        return block.getType() == Material.WALL_SIGN;
     }
 
     /**

@@ -25,11 +25,18 @@ public class LocketteProListener extends ILListener {
 
     @Override
     protected OfflinePlayer getPlayerFromNameLine(String line){
-        return Bukkit.getOfflinePlayer(Utils.getUsernameFromLine(line));
+        String name = Utils.getUsernameFromLine(line);
+        if(name == null || name.isEmpty()) return null;
+        return Bukkit.getOfflinePlayer(name);
     }
 
     @Override
     protected OfflinePlayer getPlayerFromUUIDLine(Sign sign, int index){
-        return Bukkit.getOfflinePlayer(UUID.fromString(Utils.getUuidFromLine(sign.getLine(index))));
+        String suuid = Utils.getUuidFromLine(sign.getLine(index));
+        if(suuid != null && !suuid.isEmpty()){
+            UUID uuid = UUID.fromString(suuid);
+            return Bukkit.getOfflinePlayer(uuid);
+        }
+        return null;
     }
 }

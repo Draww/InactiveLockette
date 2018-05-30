@@ -14,7 +14,7 @@ public class ILCommandHandler implements CommandExecutor {
         if(!cmd.getLabel().equalsIgnoreCase("InactiveLockette") && !cmd.getLabel().equalsIgnoreCase("IL")) return false;
 
         if(!sender.hasPermission("inactivelockette.admin") && !sender.hasPermission("inactivelockette.*"))
-            Messenger.sendPlayerMessage(sender,"onCommand.noPermission");
+            Messenger.sendLocalisedMessage(sender,"onCommand.noPermission");
 
         if(args.length < 1){
             onDefault(sender);
@@ -49,7 +49,7 @@ public class ILCommandHandler implements CommandExecutor {
     }
 
     private void onHelp(CommandSender sender){
-        Messenger.sendPlayerMessage(sender, "&2InactiveLockette allows users to open locks of inactive players by right-clicking on the sign");
+        Messenger.sendPlayerMessage(sender, "&2InactiveLockette allows users to open locks of inactive players by left-clicking on the sign");
         Messenger.sendPlayerMessage(sender, "&2InactiveLockette offers many configuration options to make it fit your server");
         Messenger.sendPlayerMessage(sender, "&2You can charge players for opening locks, or make the opened containers empty");
         Messenger.sendPlayerMessage(sender, "&2Lots more can be found in the settings!");
@@ -57,7 +57,7 @@ public class ILCommandHandler implements CommandExecutor {
 
     private void onReload(CommandSender sender){
         ILConfigHandler.reloadConfigs();
-        Messenger.sendPlayerMessage(sender, "onCommand.reloadConfig");
+        Messenger.sendLocalisedMessage(sender, "onCommand.reloadConfig");
     }
 
     private void onVersion(CommandSender sender){

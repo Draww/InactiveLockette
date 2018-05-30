@@ -26,37 +26,37 @@ public class Messenger {
         plugin.getLogger().severe("[InactiveLockette] " + error);
     }
 
-    public static void sendPlayerMessage(CommandSender sender, String path, String... replacements){
+    public static void sendPlayerMessage(CommandSender sender, String message, String... replacements){
+        sender.sendMessage(colourise(performReplacements(message, replacements)));
+    }
+
+    public static void sendLocalisedMessage(CommandSender sender, String path, String... replacements){
         String mes = locale.getString(path);
-        performReplacements(mes, replacements);
 
         if(mes != null && !mes.isEmpty())
-            mes = prefix + " " + colourise(mes);
+            mes = prefix + " " + mes;
         else
             mes = "&4[InactiveLockette] Message String " + path + " is null!";
 
-        sender.sendMessage(mes);
+        sendPlayerMessage(sender,mes,replacements);
     }
 
     public static void broadcastMessage(String path, String... replacements){
-        String message = locale.getString(path);
-        performReplacements(message, replacements);
-        Bukkit.broadcastMessage(message);
+        Bukkit.broadcastMessage(performReplacements(locale.getString(path), replacements));
     }
 
     public static String getLocalisedMessage(String path, String... replacements){
-        String message = locale.getString(path);
-        performReplacements(message, replacements);
-        return message;
+        return performReplacements(locale.getString(path), replacements);
     }
 
-    private static void performReplacements(String message, String[] replacements){
+    private static String performReplacements(String message, String[] replacements){
         for(int i = 0; i < replacements.length; i+=2){
             String toReplace = replacements[i];
             String replacement = replacements[i+1];
             if(toReplace != null && replacement != null)
-                message.replaceAll(toReplace, replacement);
+                message = message.replaceAll(toReplace, replacement);
         }
+        return message;
     }
 
     private static String colourise(String message){

@@ -41,7 +41,7 @@ public abstract class ILListener implements Listener {
             case "hopper":
                 InventoryHolder ih = (InventoryHolder) block.getState();
                 ih.getInventory().clear();
-                Messenger.sendPlayerMessage(player, "onUnlock.cleared");
+                Messenger.sendLocalisedMessage(player, "onUnlock.cleared");
                 break;
         }
     }
@@ -57,13 +57,13 @@ public abstract class ILListener implements Listener {
             DecimalFormat df = new DecimalFormat("0.00");
             String moneyCost = df.format(cost);
             String newBalance = df.format(ILMain.econ.getBalance(p));
-            Messenger.sendPlayerMessage(p, "messages.moneyWithdraw","%cost%", moneyCost,"%balance%", newBalance);
+            Messenger.sendLocalisedMessage(p, "messages.moneyWithdraw","%cost%", moneyCost,"%balance%", newBalance);
         } else {//Player is poor
             DecimalFormat df = new DecimalFormat("0.00");
             String moneyNeeded = df.format(cost - balance);
             String moneyCost = df.format(cost);
             String newBalance = df.format(ILMain.econ.getBalance(p));
-            Messenger.sendPlayerMessage(p, "messages.moneyTransactionFailed","%cost%", moneyCost,"%balance%", newBalance,"%needed%", moneyNeeded);
+            Messenger.sendLocalisedMessage(p, "messages.moneyTransactionFailed","%cost%", moneyCost,"%balance%", newBalance,"%needed%", moneyNeeded);
         }
     }
 
@@ -91,14 +91,14 @@ public abstract class ILListener implements Listener {
     }
 
     protected void ownerStillActive(Player player, long inactivityDays){
-        Messenger.sendPlayerMessage(player, "onPunch.active");
+        Messenger.sendLocalisedMessage(player, "onPunch.active");
 
         if(ILConfigHandler.config.getBoolean("onClickDisplayDays"))
-            Messenger.sendPlayerMessage(player, "onPunch.inactive","%inactivedays%", Long.toString(inactivityDays));
+            Messenger.sendLocalisedMessage(player, "onPunch.inactive","%inactivedays%", Long.toString(inactivityDays));
 
         if(ILConfigHandler.config.getBoolean("onClickDisplayDaysToWait")){
             long daysToWait = ILConfigHandler.config.getInt("daysOfInactivity") - inactivityDays;
-            Messenger.sendPlayerMessage(player, "onPunch.daysToWait","%daystowait%", Long.toString(daysToWait));
+            Messenger.sendLocalisedMessage(player, "onPunch.daysToWait","%daystowait%", Long.toString(daysToWait));
         }
     }
 
@@ -152,14 +152,14 @@ public abstract class ILListener implements Listener {
         Player player = event.getPlayer();
 
         if(!hasPermissionToOpenLocks(player, block)){
-            Messenger.sendPlayerMessage(player, "onPunch.noPermission");
+            Messenger.sendLocalisedMessage(player, "onPunch.noPermission");
             return;
         }
 
         boolean isUUIDSign = isUUIDSign(sign);
         OfflinePlayer owner;
-        if(isUUIDSign) owner = getPlayerFromUUIDLine(sign,0);
-        else owner = getPlayerFromNameLine(sign.getLine(0));
+        if(isUUIDSign) owner = getPlayerFromUUIDLine(sign,1);
+        else owner = getPlayerFromNameLine(sign.getLine(1));
 
         if(!isInactive(owner)){ //Owner is still active
             ownerStillActive(player, getInactivityDays(owner));
@@ -260,12 +260,18 @@ public abstract class ILListener implements Listener {
         String [] lines = sign.getLines();
 
         if(isUUIDSign){
-            for(int index = 0; index < 4; index++)
-                players.add(getPlayerFromUUIDLine(sign, index));
+            for(int index = 0; index < 4; index++){
+                OfflinePlayer op = getPlayerFromUUIDLine(sign, index);
+                if(op != null)
+                    players.add(op);
+            }
         }
         else {
-            for(String line : lines)
-                players.add(getPlayerFromNameLine(line));
+            for(String line : lines){
+                OfflinePlayer op = getPlayerFromNameLine(line);
+                if(op != null)
+                    players.add(op);
+            }
         }
 
         return players;
