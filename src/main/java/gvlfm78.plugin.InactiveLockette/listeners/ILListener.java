@@ -69,15 +69,10 @@ public abstract class ILListener implements Listener {
 
     protected void broadcast(Block block, String breakerName, String ownerName){
         // Block is the block that was unlocked
-        System.out.println("Alpha");
         if(!ILConfigHandler.config.getBoolean("broadcast")) return;
 
-        System.out.println("A");
-
-        if(block == null) {Messenger.sendConsoleErrorMessage("The attached block was null!");
-        System.out.println("B");}
+        if(block == null) Messenger.sendConsoleErrorMessage("The attached block was null!");
         else {
-            System.out.println("C");
             String blockName = block.getType().name().toLowerCase().replaceAll("_", " ");
 
             Location l = block.getLocation();
@@ -89,9 +84,8 @@ public abstract class ILListener implements Listener {
             int z = (int) l.getZ();
 
             String location = x + ", " + y + ", " + z;
-            System.out.println("D");
             Messenger.broadcastMessage("messages.broadcast",
-                    "%block%", blockName, "%owner%", ownerName, "%breaker%", breakerName, "%coordinates", location);
+                    "%block%", blockName, "%owner%", ownerName, "%breaker%", breakerName, "%coordinates%", location);
         }
     }
 
@@ -183,11 +177,10 @@ public abstract class ILListener implements Listener {
 
         //Owner is inactive
         if(ILConfigHandler.config.getBoolean("onlyCheckFirstName")){
-            removeLock(owner.getName(), player, signs, attachedBlock);
+            lockRemovedActions(owner.getName(), player, signs, attachedBlock);
+            signs.forEach(sign1 -> sign1.getBlock().breakNaturally());
             return;
         }
-
-
 
         HashMap<OfflinePlayer, Sign> players = new HashMap<>();
         for(Sign currentSign : signs){
@@ -233,6 +226,7 @@ public abstract class ILListener implements Listener {
             }
             //todo might need sign.update()
         }
+        lockRemovedActions(owner.getName(), player, signs, attachedBlock);
     }
 
     private boolean hasPermissionToOpenLocks(Player player, Block block){
@@ -252,15 +246,12 @@ public abstract class ILListener implements Listener {
                 player.hasPermission("inactivelockette.admin");
     }
 
-    private void removeLock(String ownerName, Player player, List<Sign> signs, Block attachedBlock){
+    private void lockRemovedActions(String ownerName, Player player, List<Sign> signs, Block attachedBlock){
         //If economy is enabled and they have the money, make them pay
         makeUserPay(player);
 
         //Empty the container
         clearContainer(attachedBlock, player);
-
-        //Break sign
-        signs.forEach(sign -> sign.getBlock().breakNaturally());
 
         //Broadcast to whole server
         broadcast(attachedBlock, player.getName(), ownerName);

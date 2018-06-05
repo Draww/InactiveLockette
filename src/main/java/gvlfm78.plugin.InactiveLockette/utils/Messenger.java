@@ -42,7 +42,9 @@ public class Messenger {
     }
 
     public static void broadcastMessage(String path, String... replacements){
-        Bukkit.broadcastMessage(performReplacements(locale.getString(path), replacements));
+        String mes = locale.getString(path);
+        mes = colourise(performReplacements(prefix + " " + mes, replacements));
+        Bukkit.broadcastMessage(mes);
     }
 
     public static String getLocalisedMessage(String path, String... replacements){
