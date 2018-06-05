@@ -69,10 +69,15 @@ public abstract class ILListener implements Listener {
 
     protected void broadcast(Block block, String breakerName, String ownerName){
         // Block is the block that was unlocked
+        System.out.println("Alpha");
         if(!ILConfigHandler.config.getBoolean("broadcast")) return;
 
-        if(block == null) Messenger.sendConsoleErrorMessage("The attached block was null!");
+        System.out.println("A");
+
+        if(block == null) {Messenger.sendConsoleErrorMessage("The attached block was null!");
+        System.out.println("B");}
         else {
+            System.out.println("C");
             String blockName = block.getType().name().toLowerCase().replaceAll("_", " ");
 
             Location l = block.getLocation();
@@ -84,7 +89,7 @@ public abstract class ILListener implements Listener {
             int z = (int) l.getZ();
 
             String location = x + ", " + y + ", " + z;
-
+            System.out.println("D");
             Messenger.broadcastMessage("messages.broadcast",
                     "%block%", blockName, "%owner%", ownerName, "%breaker%", breakerName, "%coordinates", location);
         }
@@ -166,19 +171,25 @@ public abstract class ILListener implements Listener {
             return;
         }
 
-        //Owner is inactive
-        if(ILConfigHandler.config.getBoolean("onlyCheckFirstName")){
-            removeLock(owner.getName(), player, block, block.getRelative(((org.bukkit.material.Sign) sign).getAttachedFace()));
-            return;
-        }
-
         //Find all [more users] signs
         ArrayList<Sign> signs = new ArrayList<>();
         signs.add(sign); //Add the [Private] sign
 
-        signs.addAll(Utilities.findMoreUsersSigns(block));
+        org.bukkit.material.Sign matSign = (org.bukkit.material.Sign) block.getState().getData();
 
-        HashMap<OfflinePlayer,Sign> players = new HashMap<>();
+        Block attachedBlock = block.getRelative(matSign.getAttachedFace());
+
+        signs.addAll(Utilities.findMoreUsersSigns(attachedBlock));
+
+        //Owner is inactive
+        if(ILConfigHandler.config.getBoolean("onlyCheckFirstName")){
+            removeLock(owner.getName(), player, signs, attachedBlock);
+            return;
+        }
+
+
+
+        HashMap<OfflinePlayer, Sign> players = new HashMap<>();
         for(Sign currentSign : signs){
             for(OfflinePlayer offlinePlayer : getPlayersFromSign(sign, isUUIDSign))
                 players.put(offlinePlayer, currentSign);
@@ -187,14 +198,15 @@ public abstract class ILListener implements Listener {
         //Remove owner as we already know s/he is inactive
         players.remove(owner);
 
+        Queue<OfflinePlayer> playerQueue= new ArrayDeque<>(players.keySet());
+
         //Remove inactive players
         for(OfflinePlayer offlinePlayer : players.keySet()){
             if(isInactive(offlinePlayer))
-                players.remove(offlinePlayer);
+                playerQueue.remove(offlinePlayer);
         }
 
         //Loop through signs and place each player in sequential order
-        Queue<OfflinePlayer> playerQueue= new ArrayDeque<>(players.keySet());
 
         for(Sign currentSign : signs){
             for(int i = 1; i < 4; i++){
@@ -240,7 +252,7 @@ public abstract class ILListener implements Listener {
                 player.hasPermission("inactivelockette.admin");
     }
 
-    private void removeLock(String ownerName, Player player, Block signBlock, Block attachedBlock){
+    private void removeLock(String ownerName, Player player, List<Sign> signs, Block attachedBlock){
         //If economy is enabled and they have the money, make them pay
         makeUserPay(player);
 
@@ -248,7 +260,7 @@ public abstract class ILListener implements Listener {
         clearContainer(attachedBlock, player);
 
         //Break sign
-        signBlock.breakNaturally();
+        signs.forEach(sign -> sign.getBlock().breakNaturally());
 
         //Broadcast to whole server
         broadcast(attachedBlock, player.getName(), ownerName);

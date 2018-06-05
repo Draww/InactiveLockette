@@ -14,28 +14,38 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
-import java.util.function.Consumer;
+import java.util.List;
+import java.util.function.BiConsumer;
 
 import static org.bukkit.block.BlockFace.*;
 
-public class Utilities {
+public final class Utilities {
 
-    public static ArrayList<Sign> findMoreUsersSigns(Block block){
-        ArrayList<Sign> signs = new ArrayList<>();
+    /**
+     * Finds More Users signs attached to block
+     * @param block Block the sign is attached to
+     * @return List of More Users signs attached to block
+     */
+    public static List<Sign> findMoreUsersSigns(Block block){
+        List<Sign> signs = new ArrayList<>();
         Material mat = block.getType();
-
-        Consumer<Block> checks = (relativeBlock) -> {
-            if(mat == relativeBlock.getType())
-                signs.addAll(findMoreUsersSignsThisBlockOnly(relativeBlock));
-        };
 
         switch(mat){
             case CHEST: case TRAPPED_CHEST:
-                iterateAroundBlock(block, checks);
+                iterateAroundBlock(block, (relativeBlock, face) -> {
+                    if(mat == relativeBlock.getType())
+                        signs.addAll(findMoreUsersSignsThisBlockOnly(relativeBlock));
+                });
 
             case WOODEN_DOOR: case SPRUCE_DOOR: case BIRCH_DOOR:
             case JUNGLE_DOOR: case ACACIA_DOOR: case DARK_OAK_DOOR: case IRON_DOOR_BLOCK:
-                iterateOverBlock(block, checks);
+                iterateOverBlock(block, (relativeBlock, face) -> {
+                    signs.addAll(findMoreUsersSignsThisBlockOnly(relativeBlock));
+
+                    if(mat == relativeBlock.getType())
+                        //Doors can also be locked one block above and below, thus:
+                        signs.addAll(findMoreUsersSignsThisBlockOnly(relativeBlock.getRelative(face)));
+                });
 
             default: //Just around the one block, even for custom blocks
                 signs.addAll(findMoreUsersSignsThisBlockOnly(block));
@@ -47,32 +57,32 @@ public class Utilities {
      * Find more users signs but only around specified block
      * Useful for things such as trapdoors and hoppers
      */
-    private static ArrayList<Sign> findMoreUsersSignsThisBlockOnly(Block block){
-        ArrayList<Sign> signs = new ArrayList<>();
+    private static List<Sign> findMoreUsersSignsThisBlockOnly(Block block){
+        List<Sign> signs = new ArrayList<>();
 
-        iterateAroundBlock(block, (relativeBlock -> {
+        iterateAroundBlock(block, (relativeBlock, face) -> {
             if(isSign(relativeBlock)){
                 Sign sign = blockToSign(relativeBlock);
                 if(isMoreUsersSign(sign))
                     signs.add(sign);
             }
-        }));
+        });
 
         return signs;
     }
 
-    private static void iterateAroundBlock(Block block, Consumer<Block> checks){
-        iterateBlock(block,checks, new BlockFace[]{NORTH,EAST,SOUTH,WEST});
+    private static void iterateAroundBlock(Block block, BiConsumer<Block, BlockFace> checks){
+        iterateBlock(block, checks, new BlockFace[]{NORTH,EAST,SOUTH,WEST});
     }
 
-    private static void iterateOverBlock(Block block, Consumer<Block> checks){
-        iterateBlock(block,checks, new BlockFace[]{UP, DOWN});
+    private static void iterateOverBlock(Block block, BiConsumer<Block, BlockFace> checks){
+        iterateBlock(block, checks, new BlockFace[]{UP, DOWN});
     }
 
-    private static void iterateBlock(Block block, Consumer<Block> checks, BlockFace[] faces){
+    private static void iterateBlock(Block block, BiConsumer<Block, BlockFace> checks, BlockFace[] faces){
         for(BlockFace face : faces){
             Block relativeBlock = block.getRelative(face);
-            checks.accept(relativeBlock);
+            checks.accept(relativeBlock, face);
         }
     }
 
@@ -91,7 +101,7 @@ public class Utilities {
         return isSignFirstLine(sign, "[Private]", "[" + ILConfigHandler.config.getString("settingsChat.firstLine") + "]");
     }
     private static boolean isMoreUsersSign(Sign sign){
-        return isSignFirstLine(sign, "[More Users"); //todo support alternative [text]
+        return isSignFirstLine(sign, "[More Users]"); //todo support alternative [text]
     }
     private static boolean isSignFirstLine(Sign sign, String... texts){
         String firstLine = sign.getLine(0);
