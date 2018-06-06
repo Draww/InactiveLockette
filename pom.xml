@@ -34,6 +34,10 @@
             <id>sk89q-repo</id>
             <url>http://maven.sk89q.com/repo/</url>
         </repository>
+        <repository>
+            <id>local-maven-repo</id>
+            <url>file://${project.basedir}/local-maven-repo/</url>
+        </repository>
     </repositories>
 
     <properties>
@@ -104,43 +108,6 @@
             </resource>
         </resources>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-install-plugin</artifactId>
-                <version>2.5.2</version>
-                <executions>
-                    <execution>
-                        <id>install1</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>org.yi.acru.bukkit.lockette</groupId>
-                            <artifactId>lockette</artifactId>
-                            <version>1.8.36</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/dependencies/lockette-1.8.36.jar</file>
-                            <generatePom>true</generatePom>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>install2</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>install-file</goal>
-                        </goals>
-                        <configuration>
-                            <groupId>me.crafter.mc.lockettepro</groupId>
-                            <artifactId>lockettepro</artifactId>
-                            <version>2.9.0</version>
-                            <packaging>jar</packaging>
-                            <file>${basedir}/dependencies/lockettepro-2.9.0.jar</file>
-                            <generatePom>true</generatePom>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
             <plugin>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.7.0</version>
