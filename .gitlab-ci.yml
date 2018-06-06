@@ -1,653 +1,103 @@
 # This file is a template, and might need editing before it works on your project.
-# Auto DevOps
-# This CI/CD configuration provides a standard pipeline for
-# * building a Docker image (using a buildpack if necessary),
-# * storing the image in the container registry,
-# * running tests from a buildpack,
-# * running code quality analysis,
-# * creating a review app for each topic branch,
-# * and continuous deployment to production
+---
+# Build JAVA applications using Apache Maven (http://maven.apache.org)
+# For docker image tags see https://hub.docker.com/_/maven/
 #
-# In order to deploy, you must have a Kubernetes cluster configured either
-# via a project integration, or via group/project variables.
-# AUTO_DEVOPS_DOMAIN must also be set as a variable at the group or project
-# level, or manually added below.
+# For general lifecycle information see https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
 #
-# Continuous deployment to production is enabled by default.
-# If you want to deploy to staging first, or enable incremental rollouts,
-# set STAGING_ENABLED or INCREMENTAL_ROLLOUT_ENABLED environment variables.
-# If you want to use canary deployments, uncomment the canary job.
+# This template will build and test your projects as well as create the documentation.
 #
-# If Auto DevOps fails to detect the proper buildpack, or if you want to
-# specify a custom buildpack, set a project variable `BUILDPACK_URL` to the
-# repository URL of the buildpack.
-# e.g. BUILDPACK_URL=https://github.com/heroku/heroku-buildpack-ruby.git#v142
-# If you need multiple buildpacks, add a file to your project called
-# `.buildpacks` that contains the URLs, one on each line, in order.
-# Note: Auto CI does not work with multiple buildpacks yet
-
-image: alpine:latest
+# * Caches downloaded dependencies and plugins between invocation.
+# * Verify but don't deploy merge requests.
+# * Deploy built artifacts from master branch only.
+# * Shows how to use multiple jobs in test stage for verifying functionality
+#   with multiple JDKs.
+# * Uses site:stage to collect the documentation for multi-module projects.
+# * Publishes the documentation for `master` branch.
 
 variables:
-  # AUTO_DEVOPS_DOMAIN is the application deployment domain and should be set as a variable at the group or project level.
-  # AUTO_DEVOPS_DOMAIN: domain.example.com
+  # This will supress any download for dependencies and plugins or upload messages which would clutter the console log.
+  # `showDateTime` will show the passed time in milliseconds. You need to specify `--batch-mode` to make this work.
+  MAVEN_OPTS: "-Dmaven.repo.local=.m2/repository -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=WARN -Dorg.slf4j.simpleLogger.showDateTime=true -Djava.awt.headless=true"
+  # As of Maven 3.3.0 instead of this you may define these options in `.mvn/maven.config` so the same config is used
+  # when running from the command line.
+  # `installAtEnd` and `deployAtEnd` are only effective with recent version of the corresponding plugins.
+  MAVEN_CLI_OPTS: "--batch-mode --errors --fail-at-end --show-version -DinstallAtEnd=true -DdeployAtEnd=true"
 
-  POSTGRES_USER: user
-  POSTGRES_PASSWORD: testing-password
-  POSTGRES_ENABLED: "true"
-  POSTGRES_DB: $CI_ENVIRONMENT_SLUG
+# Cache downloaded dependencies and plugins between builds.
+# To keep cache across branches add 'key: "$CI_JOB_NAME"'
+cache:
+  paths:
+    - .m2/repository
 
-  KUBERNETES_VERSION: 1.8.6
-  HELM_VERSION: 2.6.1
-
-stages:
-  - build
-  - cleanup
-
-build:
+# This will only validate and compile stuff and run e.g. maven-enforcer-plugin.
+# Because some enforcer rules might check dependency convergence and class duplications
+# we use `test-compile` here instead of `validate`, so the correct classpath is picked up.
+.validate: &validate
   stage: build
-  image: docker:stable-git
-  services:
-  - docker:stable-dind
-  variables:
-    DOCKER_DRIVER: overlay2
   script:
-    - setup_docker
-    - build
-  only:
-    - branches
+    - 'mvn $MAVEN_CLI_OPTS test-compile'
 
-.test:
-  services:
-    - postgres:latest
-  variables:
-    POSTGRES_DB: test
+# For merge requests do not `deploy` but only run `verify`.
+# See https://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
+.verify: &verify
   stage: test
-  image: gliderlabs/herokuish:latest
   script:
-    - setup_test_db
-    - cp -R . /tmp/app
-    - /bin/herokuish buildpack test
+    - 'mvn $MAVEN_CLI_OPTS verify site site:stage'
+  except:
+    - master
+
+# Validate merge requests using JDK7
+validate:jdk7:
+  <<: *validate
+  image: maven:3.3.9-jdk-7
+
+# Validate merge requests using JDK8
+validate:jdk8:
+  <<: *validate
+  image: maven:3.3.9-jdk-8
+
+# Verify merge requests using JDK7
+verify:jdk7:
+  <<: *verify
+  image: maven:3.3.9-jdk-7
+
+# Verify merge requests using JDK8
+verify:jdk8:
+  <<: *verify
+  image: maven:3.3.9-jdk-8
+
+
+# For `master` branch run `mvn deploy` automatically.
+# Here you need to decide whether you want to use JDK7 or 8.
+# To get this working you need to define a volume while configuring your gitlab-ci-multi-runner.
+# Mount your `settings.xml` as `/root/.m2/settings.xml` which holds your secrets.
+# See https://maven.apache.org/settings.html
+deploy:jdk8:
+  # Use stage test here, so the pages job may later pickup the created site.
+  stage: test
+  script:
+    - 'mvn $MAVEN_CLI_OPTS deploy site site:stage'
   only:
-    - branches
-
-.codequality:
-  image: docker:stable
-  variables:
-    DOCKER_DRIVER: overlay2
-  allow_failure: true
-  services:
-    - docker:stable-dind
-  script:
-    - setup_docker
-    - codeclimate
-  artifacts:
-    paths: [codeclimate.json]
-
-.performance:
-  stage: performance
-  image: docker:stable
-  variables:
-    DOCKER_DRIVER: overlay2
-  allow_failure: true
-  services:
-    - docker:stable-dind
-  script:
-    - setup_docker
-    - performance
+    - master
+  # Archive up the built documentation site.
   artifacts:
     paths:
-    - performance.json
-    - sitespeed-results/
+    - target/staging
+  image: maven:3.3.9-jdk-8
+
+
+pages:
+  image: busybox:latest
+  stage: deploy
+  script:
+    # Because Maven appends the artifactId automatically to the staging path if you did define a parent pom,
+    # you might need to use `mv target/staging/YOUR_ARTIFACT_ID public` instead.
+    - mv target/staging public
+  dependencies:
+    - deploy:jdk8
+  artifacts:
+    paths:
+    - public
   only:
-    refs:
-      - branches
-    kubernetes: active
-
-.sast:
-  image: docker:stable
-  variables:
-    DOCKER_DRIVER: overlay2
-  allow_failure: true
-  services:
-    - docker:stable-dind
-  script:
-    - setup_docker
-    - sast
-  artifacts:
-    paths: [gl-sast-report.json]
-
-.dependency_scanning:
-  image: docker:stable
-  variables:
-    DOCKER_DRIVER: overlay2
-  allow_failure: true
-  services:
-    - docker:stable-dind
-  script:
-    - setup_docker
-    - dependency_scanning
-  artifacts:
-    paths: [gl-dependency-scanning-report.json]
-
-.sast:container:
-  image: docker:stable
-  variables:
-    DOCKER_DRIVER: overlay2
-  allow_failure: true
-  services:
-    - docker:stable-dind
-  script:
-    - setup_docker
-    - sast_container
-  artifacts:
-    paths: [gl-sast-container-report.json]
-
-.dast:
-  stage: dast
-  allow_failure: true
-  image: registry.gitlab.com/gitlab-org/security-products/zaproxy
-  variables:
-    POSTGRES_DB: "false"
-  script:
-    - dast
-  artifacts:
-    paths: [gl-dast-report.json]
-  only:
-    refs:
-      - branches
-    kubernetes: active
-  except:
     - master
-
-.review:
-  stage: review
-  script:
-    - check_kube_domain
-    - install_dependencies
-    - download_chart
-    - ensure_namespace
-    - install_tiller
-    - create_secret
-    - deploy
-    - persist_environment_url
-  environment:
-    name: review/$CI_COMMIT_REF_NAME
-    url: http://$CI_PROJECT_PATH_SLUG-$CI_ENVIRONMENT_SLUG.$AUTO_DEVOPS_DOMAIN
-    on_stop: stop_review
-  artifacts:
-    paths: [environment_url.txt]
-  only:
-    refs:
-      - branches
-    kubernetes: active
-  except:
-    - master
-
-.stop_review:
-  stage: cleanup
-  variables:
-    GIT_STRATEGY: none
-  script:
-    - install_dependencies
-    - delete
-  environment:
-    name: review/$CI_COMMIT_REF_NAME
-    action: stop
-  when: manual
-  allow_failure: true
-  only:
-    refs:
-      - branches
-    kubernetes: active
-  except:
-    - master
-
-# Keys that start with a dot (.) will not be processed by GitLab CI.
-# Staging and canary jobs are disabled by default, to enable them
-# remove the dot (.) before the job name.
-# https://docs.gitlab.com/ee/ci/yaml/README.html#hidden-keys
-
-# Staging deploys are disabled by default since
-# continuous deployment to production is enabled by default
-# If you prefer to automatically deploy to staging and
-# only manually promote to production, enable this job by setting
-# STAGING_ENABLED.
-
-.staging:
-  stage: staging
-  script:
-    - check_kube_domain
-    - install_dependencies
-    - download_chart
-    - ensure_namespace
-    - install_tiller
-    - create_secret
-    - deploy
-  environment:
-    name: staging
-    url: http://$CI_PROJECT_PATH_SLUG-staging.$AUTO_DEVOPS_DOMAIN
-  only:
-    refs:
-      - master
-    kubernetes: active
-    variables:
-      - $STAGING_ENABLED
-
-# Canaries are disabled by default, but if you want them,
-# and know what the downsides are, enable this job by removing the dot (.).
-
-.canary:
-  stage: canary
-  script:
-    - check_kube_domain
-    - install_dependencies
-    - download_chart
-    - ensure_namespace
-    - install_tiller
-    - create_secret
-    - deploy canary
-  environment:
-    name: production
-    url: http://$CI_PROJECT_PATH_SLUG.$AUTO_DEVOPS_DOMAIN
-  when: manual
-  only:
-    refs:
-      - master
-    kubernetes: active
-
-.production: &production_template
-  stage: production
-  script:
-    - check_kube_domain
-    - install_dependencies
-    - download_chart
-    - ensure_namespace
-    - install_tiller
-    - create_secret
-    - deploy
-    - delete canary
-    - delete rollout
-    - persist_environment_url
-  environment:
-    name: production
-    url: http://$CI_PROJECT_PATH_SLUG.$AUTO_DEVOPS_DOMAIN
-  artifacts:
-    paths: [environment_url.txt]
-
-.production:
-  <<: *production_template
-  only:
-    refs:
-      - master
-    kubernetes: active
-  except:
-    variables:
-      - $STAGING_ENABLED
-      - $INCREMENTAL_ROLLOUT_ENABLED
-
-.production_manual:
-  <<: *production_template
-  when: manual
-  allow_failure: false
-  only:
-    refs:
-      - master
-    kubernetes: active
-    variables:
-      - $STAGING_ENABLED
-  except:
-    variables:
-      - $INCREMENTAL_ROLLOUT_ENABLED
-
-# ---------------------------------------------------------------------------
-
-.auto_devops: &auto_devops |
-  # Auto DevOps variables and functions
-  [[ "$TRACE" ]] && set -x
-  auto_database_url=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${CI_ENVIRONMENT_SLUG}-postgres:5432/${POSTGRES_DB}
-  export DATABASE_URL=${DATABASE_URL-$auto_database_url}
-  export CI_APPLICATION_REPOSITORY=$CI_REGISTRY_IMAGE/$CI_COMMIT_REF_SLUG
-  export CI_APPLICATION_TAG=$CI_COMMIT_SHA
-  export CI_CONTAINER_NAME=ci_job_build_${CI_JOB_ID}
-  export TILLER_NAMESPACE=$KUBE_NAMESPACE
-  # Extract "MAJOR.MINOR" from CI_SERVER_VERSION and generate "MAJOR-MINOR-stable" for Security Products
-  export SP_VERSION=$(echo "$CI_SERVER_VERSION" | sed 's/^\([0-9]*\)\.\([0-9]*\).*/\1-\2-stable/')
-
-  function sast_container() {
-    if [[ -n "$CI_REGISTRY_USER" ]]; then
-      echo "Logging to GitLab Container Registry with CI credentials..."
-      docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-      echo ""
-    fi
-
-    docker run -d --name db arminc/clair-db:latest
-    docker run -p 6060:6060 --link db:postgres -d --name clair --restart on-failure arminc/clair-local-scan:v2.0.1
-    apk add -U wget ca-certificates
-    docker pull ${CI_APPLICATION_REPOSITORY}:${CI_APPLICATION_TAG}
-    wget https://github.com/arminc/clair-scanner/releases/download/v8/clair-scanner_linux_amd64
-    mv clair-scanner_linux_amd64 clair-scanner
-    chmod +x clair-scanner
-    touch clair-whitelist.yml
-    retries=0
-    echo "Waiting for clair daemon to start"
-    while( ! wget -T 10 -q -O /dev/null http://docker:6060/v1/namespaces ) ; do sleep 1 ; echo -n "." ; if [ $retries -eq 10 ] ; then echo " Timeout, aborting." ; exit 1 ; fi ; retries=$(($retries+1)) ; done
-    ./clair-scanner -c http://docker:6060 --ip $(hostname -i) -r gl-sast-container-report.json -l clair.log -w clair-whitelist.yml ${CI_APPLICATION_REPOSITORY}:${CI_APPLICATION_TAG} || true
-  }
-
-  function codeclimate() {
-    docker run --env SOURCE_CODE="$PWD" \
-               --volume "$PWD":/code \
-               --volume /var/run/docker.sock:/var/run/docker.sock \
-               "registry.gitlab.com/gitlab-org/security-products/codequality:$SP_VERSION" /code
-  }
-
-  function sast() {
-    case "$CI_SERVER_VERSION" in
-      *-ee)
-
-        # Deprecation notice for CONFIDENCE_LEVEL variable
-        if [ -z "$SAST_CONFIDENCE_LEVEL" -a "$CONFIDENCE_LEVEL" ]; then
-          SAST_CONFIDENCE_LEVEL="$CONFIDENCE_LEVEL"
-          echo "WARNING: CONFIDENCE_LEVEL is deprecated and MUST be replaced with SAST_CONFIDENCE_LEVEL"
-        fi
-
-        docker run --env SAST_CONFIDENCE_LEVEL="${SAST_CONFIDENCE_LEVEL:-3}" \
-                   --volume "$PWD:/code" \
-                   --volume /var/run/docker.sock:/var/run/docker.sock \
-                   "registry.gitlab.com/gitlab-org/security-products/sast:$SP_VERSION" /app/bin/run /code
-        ;;
-      *)
-        echo "GitLab EE is required"
-        ;;
-    esac
-  }
-
-  function dependency_scanning() {
-    case "$CI_SERVER_VERSION" in
-      *-ee)
-        docker run --env DEP_SCAN_DISABLE_REMOTE_CHECKS="${DEP_SCAN_DISABLE_REMOTE_CHECKS:-false}" \
-                   --volume "$PWD:/code" \
-                   --volume /var/run/docker.sock:/var/run/docker.sock \
-                   "registry.gitlab.com/gitlab-org/security-products/dependency-scanning:$SP_VERSION" /code
-        ;;
-      *)
-        echo "GitLab EE is required"
-        ;;
-    esac
-  }
-
-  function get_replicas() {
-    track="${1:-stable}"
-    percentage="${2:-100}"
-
-    env_track=$( echo $track | tr -s  '[:lower:]'  '[:upper:]' )
-    env_slug=$( echo ${CI_ENVIRONMENT_SLUG//-/_} | tr -s  '[:lower:]'  '[:upper:]' )
-
-    if [[ "$track" == "stable" ]] || [[ "$track" == "rollout" ]]; then
-      # for stable track get number of replicas from `PRODUCTION_REPLICAS`
-      eval new_replicas=\$${env_slug}_REPLICAS
-      if [[ -z "$new_replicas" ]]; then
-        new_replicas=$REPLICAS
-      fi
-    else
-      # for all tracks get number of replicas from `CANARY_PRODUCTION_REPLICAS`
-      eval new_replicas=\$${env_track}_${env_slug}_REPLICAS
-      if [[ -z "$new_replicas" ]]; then
-        eval new_replicas=\${env_track}_REPLICAS
-      fi
-    fi
-
-    replicas="${new_replicas:-1}"
-    replicas="$(($replicas * $percentage / 100))"
-
-    # always return at least one replicas
-    if [[ $replicas -gt 0 ]]; then
-      echo "$replicas"
-    else
-      echo 1
-    fi
-  }
-
-  function deploy() {
-    track="${1-stable}"
-    percentage="${2:-100}"
-    name="$CI_ENVIRONMENT_SLUG"
-
-    replicas="1"
-    service_enabled="true"
-    postgres_enabled="$POSTGRES_ENABLED"
-
-    # if track is different than stable,
-    # re-use all attached resources
-    if [[ "$track" != "stable" ]]; then
-      name="$name-$track"
-      service_enabled="false"
-      postgres_enabled="false"
-    fi
-
-    replicas=$(get_replicas "$track" "$percentage")
-
-    if [[ "$CI_PROJECT_VISIBILITY" != "public" ]]; then
-      secret_name='gitlab-registry'
-    else
-      secret_name=''
-    fi
-
-    helm upgrade --install \
-      --wait \
-      --set service.enabled="$service_enabled" \
-      --set releaseOverride="$CI_ENVIRONMENT_SLUG" \
-      --set image.repository="$CI_APPLICATION_REPOSITORY" \
-      --set image.tag="$CI_APPLICATION_TAG" \
-      --set image.pullPolicy=IfNotPresent \
-      --set image.secrets[0].name="$secret_name" \
-      --set application.track="$track" \
-      --set application.database_url="$DATABASE_URL" \
-      --set service.url="$CI_ENVIRONMENT_URL" \
-      --set replicaCount="$replicas" \
-      --set postgresql.enabled="$postgres_enabled" \
-      --set postgresql.nameOverride="postgres" \
-      --set postgresql.postgresUser="$POSTGRES_USER" \
-      --set postgresql.postgresPassword="$POSTGRES_PASSWORD" \
-      --set postgresql.postgresDatabase="$POSTGRES_DB" \
-      --namespace="$KUBE_NAMESPACE" \
-      --version="$CI_PIPELINE_ID-$CI_JOB_ID" \
-      "$name" \
-      chart/
-  }
-
-  function scale() {
-    track="${1-stable}"
-    percentage="${2-100}"
-    name="$CI_ENVIRONMENT_SLUG"
-
-    if [[ "$track" != "stable" ]]; then
-      name="$name-$track"
-    fi
-
-    replicas=$(get_replicas "$track" "$percentage")
-
-    if [[ -n "$(helm ls -q "^$name$")" ]]; then
-      helm upgrade --reuse-values \
-        --wait \
-        --set replicaCount="$replicas" \
-        --namespace="$KUBE_NAMESPACE" \
-        "$name" \
-        chart/
-    fi
-  }
-
-  function install_dependencies() {
-    apk add -U openssl curl tar gzip bash ca-certificates git
-    wget -q -O /etc/apk/keys/sgerrand.rsa.pub https://raw.githubusercontent.com/sgerrand/alpine-pkg-glibc/master/sgerrand.rsa.pub
-    wget https://github.com/sgerrand/alpine-pkg-glibc/releases/download/2.23-r3/glibc-2.23-r3.apk
-    apk add glibc-2.23-r3.apk
-    rm glibc-2.23-r3.apk
-
-    curl "https://kubernetes-helm.storage.googleapis.com/helm-v${HELM_VERSION}-linux-amd64.tar.gz" | tar zx
-    mv linux-amd64/helm /usr/bin/
-    helm version --client
-
-    curl -L -o /usr/bin/kubectl "https://storage.googleapis.com/kubernetes-release/release/v${KUBERNETES_VERSION}/bin/linux/amd64/kubectl"
-    chmod +x /usr/bin/kubectl
-    kubectl version --client
-  }
-
-  function setup_docker() {
-    if ! docker info &>/dev/null; then
-      if [ -z "$DOCKER_HOST" -a "$KUBERNETES_PORT" ]; then
-        export DOCKER_HOST='tcp://localhost:2375'
-      fi
-    fi
-  }
-
-  function setup_test_db() {
-    if [ -z ${KUBERNETES_PORT+x} ]; then
-      DB_HOST=postgres
-    else
-      DB_HOST=localhost
-    fi
-    export DATABASE_URL="postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DB_HOST}:5432/${POSTGRES_DB}"
-  }
-
-  function download_chart() {
-    if [[ ! -d chart ]]; then
-      auto_chart=${AUTO_DEVOPS_CHART:-gitlab/auto-deploy-app}
-      auto_chart_name=$(basename $auto_chart)
-      auto_chart_name=${auto_chart_name%.tgz}
-    else
-      auto_chart="chart"
-      auto_chart_name="chart"
-    fi
-
-    helm init --client-only
-    helm repo add gitlab https://charts.gitlab.io
-    if [[ ! -d "$auto_chart" ]]; then
-      helm fetch ${auto_chart} --untar
-    fi
-    if [ "$auto_chart_name" != "chart" ]; then
-      mv ${auto_chart_name} chart
-    fi
-
-    helm dependency update chart/
-    helm dependency build chart/
-  }
-
-  function ensure_namespace() {
-    kubectl describe namespace "$KUBE_NAMESPACE" || kubectl create namespace "$KUBE_NAMESPACE"
-  }
-
-  function check_kube_domain() {
-    if [ -z ${AUTO_DEVOPS_DOMAIN+x} ]; then
-      echo "In order to deploy or use Review Apps, AUTO_DEVOPS_DOMAIN variable must be set"
-      echo "You can do it in Auto DevOps project settings or defining a secret variable at group or project level"
-      echo "You can also manually add it in .gitlab-ci.yml"
-      false
-    else
-      true
-    fi
-  }
-
-  function build() {
-
-    if [[ -n "$CI_REGISTRY_USER" ]]; then
-      echo "Logging to GitLab Container Registry with CI credentials..."
-      docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" "$CI_REGISTRY"
-      echo ""
-    fi
-
-    if [[ -f Dockerfile ]]; then
-      echo "Building Dockerfile-based application..."
-      docker build -t "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG" .
-    else
-      echo "Building Heroku-based application using gliderlabs/herokuish docker image..."
-      docker run -i --name="$CI_CONTAINER_NAME" -v "$(pwd):/tmp/app:ro" gliderlabs/herokuish /bin/herokuish buildpack build
-      docker commit "$CI_CONTAINER_NAME" "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG"
-      docker rm "$CI_CONTAINER_NAME" >/dev/null
-      echo ""
-
-      echo "Configuring $CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG docker image..."
-      docker create --expose 5000 --env PORT=5000 --name="$CI_CONTAINER_NAME" "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG" /bin/herokuish procfile start web
-      docker commit "$CI_CONTAINER_NAME" "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG"
-      docker rm "$CI_CONTAINER_NAME" >/dev/null
-      echo ""
-    fi
-
-    echo "Pushing to GitLab Container Registry..."
-    docker push "$CI_APPLICATION_REPOSITORY:$CI_APPLICATION_TAG"
-    echo ""
-  }
-
-  function install_tiller() {
-    echo "Checking Tiller..."
-    helm init --upgrade
-    kubectl rollout status -n "$TILLER_NAMESPACE" -w "deployment/tiller-deploy"
-    if ! helm version --debug; then
-      echo "Failed to init Tiller."
-      return 1
-    fi
-    echo ""
-  }
-
-  function create_secret() {
-    echo "Create secret..."
-    if [[ "$CI_PROJECT_VISIBILITY" == "public" ]]; then
-      return
-    fi
-
-    kubectl create secret -n "$KUBE_NAMESPACE" \
-      docker-registry gitlab-registry \
-      --docker-server="$CI_REGISTRY" \
-      --docker-username="${CI_DEPLOY_USER:-$CI_REGISTRY_USER}" \
-      --docker-password="${CI_DEPLOY_PASSWORD:-$CI_REGISTRY_PASSWORD}" \
-      --docker-email="$GITLAB_USER_EMAIL" \
-      -o yaml --dry-run | kubectl replace -n "$KUBE_NAMESPACE" --force -f -
-  }
-
-  function dast() {
-    export CI_ENVIRONMENT_URL=$(cat environment_url.txt)
-
-    mkdir /zap/wrk/
-    /zap/zap-baseline.py -J gl-dast-report.json -t "$CI_ENVIRONMENT_URL" || true
-    cp /zap/wrk/gl-dast-report.json .
-  }
-
-  function performance() {
-    export CI_ENVIRONMENT_URL=$(cat environment_url.txt)
-
-    mkdir gitlab-exporter
-    wget -O gitlab-exporter/index.js https://gitlab.com/gitlab-org/gl-performance/raw/10-5/index.js
-
-    mkdir sitespeed-results
-
-    if [ -f .gitlab-urls.txt ]
-    then
-      sed -i -e 's@^@'"$CI_ENVIRONMENT_URL"'@' .gitlab-urls.txt
-      docker run --shm-size=1g --rm -v "$(pwd)":/sitespeed.io sitespeedio/sitespeed.io:6.3.1 --plugins.add ./gitlab-exporter --outputFolder sitespeed-results .gitlab-urls.txt
-    else
-      docker run --shm-size=1g --rm -v "$(pwd)":/sitespeed.io sitespeedio/sitespeed.io:6.3.1 --plugins.add ./gitlab-exporter --outputFolder sitespeed-results "$CI_ENVIRONMENT_URL"
-    fi
-
-    mv sitespeed-results/data/performance.json performance.json
-  }
-
-  function persist_environment_url() {
-      echo $CI_ENVIRONMENT_URL > environment_url.txt
-  }
-
-  function delete() {
-    track="${1-stable}"
-    name="$CI_ENVIRONMENT_SLUG"
-
-    if [[ "$track" != "stable" ]]; then
-      name="$name-$track"
-    fi
-
-    if [[ -n "$(helm ls -q "^$name$")" ]]; then
-      helm delete "$name"
-    fi
-  }
-
-before_script:
-  - *auto_devops
