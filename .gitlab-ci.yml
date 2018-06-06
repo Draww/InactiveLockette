@@ -42,13 +42,6 @@ variables:
 
 stages:
   - build
-  - test
-  - review
-  - dast
-  - staging
-  - canary
-  - production
-  - performance
   - cleanup
 
 build:
@@ -64,7 +57,7 @@ build:
   only:
     - branches
 
-test:
+.test:
   services:
     - postgres:latest
   variables:
@@ -78,7 +71,7 @@ test:
   only:
     - branches
 
-codequality:
+.codequality:
   image: docker:stable
   variables:
     DOCKER_DRIVER: overlay2
@@ -91,7 +84,7 @@ codequality:
   artifacts:
     paths: [codeclimate.json]
 
-performance:
+.performance:
   stage: performance
   image: docker:stable
   variables:
@@ -111,7 +104,7 @@ performance:
       - branches
     kubernetes: active
 
-sast:
+.sast:
   image: docker:stable
   variables:
     DOCKER_DRIVER: overlay2
@@ -124,7 +117,7 @@ sast:
   artifacts:
     paths: [gl-sast-report.json]
 
-dependency_scanning:
+.dependency_scanning:
   image: docker:stable
   variables:
     DOCKER_DRIVER: overlay2
@@ -137,7 +130,7 @@ dependency_scanning:
   artifacts:
     paths: [gl-dependency-scanning-report.json]
 
-sast:container:
+.sast:container:
   image: docker:stable
   variables:
     DOCKER_DRIVER: overlay2
@@ -150,7 +143,7 @@ sast:container:
   artifacts:
     paths: [gl-sast-container-report.json]
 
-dast:
+.dast:
   stage: dast
   allow_failure: true
   image: registry.gitlab.com/gitlab-org/security-products/zaproxy
@@ -167,7 +160,7 @@ dast:
   except:
     - master
 
-review:
+.review:
   stage: review
   script:
     - check_kube_domain
@@ -191,7 +184,7 @@ review:
   except:
     - master
 
-stop_review:
+.stop_review:
   stage: cleanup
   variables:
     GIT_STRATEGY: none
