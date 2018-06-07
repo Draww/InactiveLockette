@@ -62,7 +62,7 @@ public class ILConfigHandler {
         if(config.getInt("config-version") == defaultConfig.getInt("config-version")) return;
         Messenger.sendConsoleMessage("Config versions do not match, backing up config and saving a new copy...");
 
-        File backupFile = getFile("config_backup.yml");
+        File backupFile = getFile("config_backup");
         backupFile.delete();
         getConfigYMLFile().renameTo(backupFile);
         setupConfigYML();
@@ -92,7 +92,7 @@ public class ILConfigHandler {
 
     private static void backupLocale(File localeFile){
         Messenger.sendConsoleMessage("Locale versions do not match, backing up locale and saving a new copy...");
-        File backupFile = getFile("locale_backup.yml");
+        File backupFile = getFile("locale_backup");
         backupFile.delete();
         localeFile.renameTo(backupFile);
     }
