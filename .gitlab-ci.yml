@@ -1,0 +1,15 @@
+image: maven:3.3.9-jdk-8
+cache:
+  paths:
+    - /root/.m2/repository/
+    
+#before_script:
+#  - apt-get update -y && apt-get upgrade -y
+    
+build:
+  script:
+    - mvn package -B
+  artifacts:
+    name: "InactiveLockette"
+    paths:
+      - ./target/InactiveLockette*.jar
