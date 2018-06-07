@@ -30,7 +30,6 @@ public class ILConfigHandler {
         upgradeConfig();
         //Locale
         setupLocale();
-        loadLocale();
     }
 
     private static YamlConfiguration getYML(File file){
@@ -77,14 +76,36 @@ public class ILConfigHandler {
     }
 
     private static void setupLocale(){
-        if(getLocaleFile().exists()) return;
-
         String langCode = getLanguage();
+        File localeFile = getLocaleFile();
+        if(localeFile.exists()){
+            loadLocale();
+            int version = locale.getInt("version");
+            int latest = getLatestLocaleVersion(langCode);
+
+            if(latest != version){//upgrade locale
+                backupLocale(localeFile);
+            } else return; //locale is up to date
+        }
+
         if(!ArrayUtils.contains(LANGUAGES, langCode)){
             Messenger.sendConsoleMessage("Invalid language code in config.yml! Loading up english locale");
             langCode = "enGB";
         }
         saveLanguageFile(langCode);
+        loadLocale();
+    }
+
+    private static void backupLocale(File localeFile){
+        Messenger.sendConsoleMessage("Locale versions do not match, backing up locale and saving a new copy...");
+        File backupFile = getFile("locale_backup.yml");
+        backupFile.delete();
+        localeFile.renameTo(backupFile);
+    }
+
+    private static int getLatestLocaleVersion(String langCode){
+        return YamlConfiguration.loadConfiguration(
+                new InputStreamReader(plugin.getResource("locale-" + langCode + ".yml"))).getInt("version");
     }
 
     static YamlConfiguration getLocale(){

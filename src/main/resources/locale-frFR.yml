@@ -1,6 +1,8 @@
 # InactiveLockette plugin by gvlfm78
 # French translation by anonymous may not be perfect,
 # if you wish to improve it contact gvlfm78
+version: 2
+
 settingsChat:
   firstLine: 'Privé'
   prefix: '&9[InactiveLockette]'
@@ -9,7 +11,7 @@ onPluginLoad:
   updateAvailableLink: '&9Obtenir de: &7'
   failedUpdateCheck: 'Quelque-chose est allait mal en essayant de vérifier les mises à jour'
 onCommand:
-  reloadConfig: '&aFichier de configuration rechargé'
+  reloadConfig: '&aFichiers de configuration rechargés'
   noPermission: '&4Vous ne pouvez pas utiliser cette commande'
 onPunch:
   active: '&cLe propriétaire de cette serrure est encore actif'
@@ -21,4 +23,4 @@ onUnlock:
 messages:
   broadcast: 'Joueur %breaker% a débloqué %block% possédé par %owner% aux coordonnées %coordinates%'
   moneyWithdraw: '&2Vous avez enlevé cette serrure pour $%cost%. Nouvelle balance: $%balance%'
-  moneyTransactionFailed: 'Vous n''avez pas assez d''argent pour enlever cette serrure.\nVous avez besoin $%cost% pour ouvrire une serrure.\nVous avez $%balance% et avez besoin une autre $%needed%.'
+  moneyTransactionFailed: 'Vous avez besoin $%cost% pour ouvrire une serrure. Vous avez $%balance% et avez besoin une autre $%needed%.'

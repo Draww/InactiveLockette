@@ -28,8 +28,9 @@ public class ILMain extends JavaPlugin {
     @Override
     public void onEnable(){
         description = getDescription();
+        Messenger.initialiseLogging(getLogger());
         ILConfigHandler.initialise(this);
-        Messenger.initialise(this);
+        Messenger.initialiseMessaging();
 
         initialiseLocketteListener();
 

@@ -1,5 +1,7 @@
 # InactiveLockette plugin by gvlfm78
 # English locale by gvlfm78
+version: 2
+
 settingsChat:
   firstLine: 'Private'
   prefix: '&9[InactiveLockette]'
@@ -8,7 +10,7 @@ onPluginLoad:
   updateAvailableLink: '&9Get it from: &7'
   failedUpdateCheck: 'Something went wrong while trying to check for updates'
 onCommand:
-  reloadConfig: '&aConfiguration file reloaded'
+  reloadConfig: '&aConfiguration files reloaded'
   noPermission: '&4You are not allowed to use that command'
 onPunch:
   active: '&cThe owner of this lock is still active'
@@ -20,4 +22,4 @@ onUnlock:
 messages:
   broadcast: '&dPlayer %breaker% unlocked a %block% owned by %owner% at coordinates %coordinates%'
   moneyWithdraw: '&2You have removed this lock for $%cost%. New balance: $%balance%'
-  moneyTransactionFailed: '&cYou do not have enough money to remove this lock.\nYou need $%cost% to open a lock.\nYou have $%balance% and require another $%needed%.'
+  moneyTransactionFailed: '&cYou need $%cost% to open a lock. You have $%balance% and require another $%needed%.'

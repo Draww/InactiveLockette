@@ -1,29 +1,33 @@
 package gvlfm78.plugin.InactiveLockette.utils;
 
-import gvlfm78.plugin.InactiveLockette.ILMain;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.file.YamlConfiguration;
 
+import java.util.logging.Logger;
+
 public class Messenger {
 
-    private static ILMain plugin;
     private static YamlConfiguration locale;
     private static String prefix;
+    private static Logger logger;
 
-    public static void initialise(ILMain plugin){
-        Messenger.plugin = plugin;
+    public static void initialiseLogging(Logger logger){
+        Messenger.logger = logger;
+    }
+
+    public static void initialiseMessaging(){
         locale = ILConfigHandler.getLocale();
         prefix = colourise(ILConfigHandler.getPrefix());
     }
 
     public static void sendConsoleMessage(String message){
-        plugin.getLogger().info(message);
+        logger.info(message);
     }
 
     public static void sendConsoleErrorMessage(String error){
-        plugin.getLogger().severe("[InactiveLockette] " + error);
+        logger.severe("[InactiveLockette] " + error);
     }
 
     public static void sendPlayerMessage(CommandSender sender, String message, String... replacements){
