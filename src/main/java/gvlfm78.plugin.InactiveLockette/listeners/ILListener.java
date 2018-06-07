@@ -157,10 +157,12 @@ public abstract class ILListener implements Listener {
         if(isUUIDSign) owner = getPlayerFromUUIDLine(sign,1);
         else owner = getPlayerFromNameLine(sign.getLine(1));
 
-        //If they are the owner of this lock don't do anything
-        if(player.getUniqueId().equals(owner.getUniqueId())) return;
+        UUID ownerUUID = owner.getUniqueId();
 
-        if(!hasPermissionToOpenLocks(player, block)){
+        //If they are the owner of this lock don't do anything
+        if(player.getUniqueId().equals(ownerUUID)) return;
+
+        if(!hasPermissionToOpenLocks(player, block, ownerUUID)){
             Messenger.sendLocalisedMessage(player, "onPunch.noPermission");
             return;
         }
@@ -236,7 +238,7 @@ public abstract class ILListener implements Listener {
         lockRemovedActions(owner.getName(), player, attachedBlock);
     }
 
-    private boolean hasPermissionToOpenLocks(Player player, Block block){
+    private boolean hasPermissionToOpenLocks(Player player, Block block, UUID ownerUUID){
         FileConfiguration config = ILConfigHandler.config;
         if(config.getBoolean("breakLockIfRegionOwner") && !Utilities.isPlayerBlockOwner(player, block))
             return false;
@@ -244,11 +246,16 @@ public abstract class ILListener implements Listener {
         if(config.getBoolean("breakLockIfCanBuild") && !Utilities.getWorldGuard().canBuild(player, block))
             return false;
 
-        return !isBlackListed(player.getUniqueId()) &&
-                !ILConfigHandler.config.getBoolean("permissionToOpenLocks") ||
+        boolean isBlacklisted = isBlackListed(ownerUUID);
+
+        if(config.getBoolean("regionOwnerOverride") && Utilities.isPlayerBlockOwner(player, block) && !isBlacklisted)
+            return true;
+
+        return !isBlacklisted &&
+                (!ILConfigHandler.config.getBoolean("permissionToOpenLocks") ||
                 player.hasPermission("inactivelockette.player") ||
                 player.hasPermission("inactivelockette.*") ||
-                player.hasPermission("inactivelockette.admin");
+                player.hasPermission("inactivelockette.admin"));
     }
 
     private void lockRemovedActions(String ownerName, Player player, Block attachedBlock){

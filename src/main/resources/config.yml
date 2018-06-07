@@ -37,6 +37,9 @@ breakLockIfRegionOwner: false
 # Only allow user to break lock if they have WorldGuard BUILD permission for the region the block is in
 breakLockIfCanBuild: false
 
+# If user is owner of region block is in they can open it regardless of the owner
+regionOwnerOverride: false
+
 # If the plugin should use economy
 useEconomy: false
 
@@ -60,4 +63,4 @@ checkForUpdates: true
 ## DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU'RE DOING ###
 ## IF IN DOUBT, NO, YOU DON'T KNOW WHAT YOU'RE DOING ######
 ###########################################################
-config-version: 3
+config-version: 4
