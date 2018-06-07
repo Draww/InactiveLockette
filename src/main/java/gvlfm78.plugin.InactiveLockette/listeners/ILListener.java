@@ -46,8 +46,8 @@ public abstract class ILListener implements Listener {
         }
     }
 
-    protected void makeUserPay(Player p){
-        if(!ILConfigHandler.config.getBoolean("useEconomy") || ILMain.econ.isEnabled()) return;
+    protected boolean makeUserPay(Player p){
+        if(!ILConfigHandler.config.getBoolean("useEconomy") || !ILMain.econ.isEnabled()) return true;
 
         double cost = ILConfigHandler.config.getInt("cost");
         double balance = ILMain.econ.getBalance(p);
@@ -58,12 +58,14 @@ public abstract class ILListener implements Listener {
             String moneyCost = df.format(cost);
             String newBalance = df.format(ILMain.econ.getBalance(p));
             Messenger.sendLocalisedMessage(p, "messages.moneyWithdraw","%cost%", moneyCost,"%balance%", newBalance);
+            return true;
         } else {//Player is poor
             DecimalFormat df = new DecimalFormat("0.00");
             String moneyNeeded = df.format(cost - balance);
             String moneyCost = df.format(cost);
             String newBalance = df.format(ILMain.econ.getBalance(p));
             Messenger.sendLocalisedMessage(p, "messages.moneyTransactionFailed","%cost%", moneyCost,"%balance%", newBalance,"%needed%", moneyNeeded);
+            return false;
         }
     }
 
@@ -150,20 +152,25 @@ public abstract class ILListener implements Listener {
 
         Player player = event.getPlayer();
 
-        if(!hasPermissionToOpenLocks(player, block)){
-            Messenger.sendLocalisedMessage(player, "onPunch.noPermission");
-            return;
-        }
-
         boolean isUUIDSign = isUUIDSign(sign);
         OfflinePlayer owner;
         if(isUUIDSign) owner = getPlayerFromUUIDLine(sign,1);
         else owner = getPlayerFromNameLine(sign.getLine(1));
 
+        //If they are the owner of this lock don't do anything
+        if(player.getUniqueId().equals(owner.getUniqueId())) return;
+
+        if(!hasPermissionToOpenLocks(player, block)){
+            Messenger.sendLocalisedMessage(player, "onPunch.noPermission");
+            return;
+        }
+
         if(!isInactive(owner)){ //Owner is still active
             ownerStillActive(player, getInactivityDays(owner));
             return;
         }
+
+        if(!makeUserPay(player)) return;
 
         //Find all [more users] signs
         ArrayList<Sign> signs = new ArrayList<>();
@@ -177,7 +184,7 @@ public abstract class ILListener implements Listener {
 
         //Owner is inactive
         if(ILConfigHandler.config.getBoolean("onlyCheckFirstName")){
-            lockRemovedActions(owner.getName(), player, signs, attachedBlock);
+            lockRemovedActions(owner.getName(), player, attachedBlock);
             signs.forEach(sign1 -> sign1.getBlock().breakNaturally());
             return;
         }
@@ -226,18 +233,16 @@ public abstract class ILListener implements Listener {
             }
             //todo might need sign.update()
         }
-        lockRemovedActions(owner.getName(), player, signs, attachedBlock);
+        lockRemovedActions(owner.getName(), player, attachedBlock);
     }
 
     private boolean hasPermissionToOpenLocks(Player player, Block block){
         FileConfiguration config = ILConfigHandler.config;
-        if(config.getBoolean("breakLockIfRegionOwner")){
-            if(!Utilities.isPlayerBlockOwner(player, block)) return false;
-        }
+        if(config.getBoolean("breakLockIfRegionOwner") && !Utilities.isPlayerBlockOwner(player, block))
+            return false;
 
-        if(config.getBoolean("breakLockIfCanBuild")){
-            if(!Utilities.getWorldGuard().canBuild(player, block)) return false;
-        }
+        if(config.getBoolean("breakLockIfCanBuild") && !Utilities.getWorldGuard().canBuild(player, block))
+            return false;
 
         return !isBlackListed(player.getUniqueId()) &&
                 !ILConfigHandler.config.getBoolean("permissionToOpenLocks") ||
@@ -246,10 +251,7 @@ public abstract class ILListener implements Listener {
                 player.hasPermission("inactivelockette.admin");
     }
 
-    private void lockRemovedActions(String ownerName, Player player, List<Sign> signs, Block attachedBlock){
-        //If economy is enabled and they have the money, make them pay
-        makeUserPay(player);
-
+    private void lockRemovedActions(String ownerName, Player player, Block attachedBlock){
         //Empty the container
         clearContainer(attachedBlock, player);
 

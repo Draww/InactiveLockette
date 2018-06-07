@@ -4,6 +4,7 @@ import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
 import com.sk89q.worldguard.protection.managers.RegionManager;
 import com.sk89q.worldguard.protection.regions.ProtectedRegion;
+import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -17,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiConsumer;
 
+import static org.bukkit.Material.*;
 import static org.bukkit.block.BlockFace.*;
 
 public final class Utilities {
@@ -29,6 +31,20 @@ public final class Utilities {
     public static List<Sign> findMoreUsersSigns(Block block){
         List<Sign> signs = new ArrayList<>();
         Material mat = block.getType();
+        Material[] doors = {WOODEN_DOOR,SPRUCE_DOOR,BIRCH_DOOR,JUNGLE_DOOR,ACACIA_DOOR,DARK_OAK_DOOR,IRON_DOOR_BLOCK};
+
+
+        //Before this we must also check above and below if there is a door block
+        if(!ArrayUtils.contains(doors, mat)){ //If it's not a door block
+            List<Block> doorBlocks = new ArrayList<>(2);
+
+            iterateOverBlock(block, (relativeBlock, face) -> {
+                if(ArrayUtils.contains(doors, relativeBlock.getType()))
+                    doorBlocks.add(relativeBlock);
+            });
+            for(Block doorBlock : doorBlocks)
+                signs.addAll(findMoreUsersSigns(doorBlock));
+        }
 
         switch(mat){
             case CHEST: case TRAPPED_CHEST:
