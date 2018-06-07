@@ -1,7 +1,6 @@
 package gvlfm78.plugin.InactiveLockette.utils;
 
 import gvlfm78.plugin.InactiveLockette.ILMain;
-import org.apache.commons.lang.ArrayUtils;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -10,8 +9,6 @@ import java.io.*;
 import java.nio.charset.Charset;
 
 public class ILConfigHandler {
-
-    private static final String[] LANGUAGES = {"enGB", "itIT", "frFR"};
 
     private static ILMain plugin;
     public static FileConfiguration config;
@@ -71,28 +68,25 @@ public class ILConfigHandler {
         setupConfigYML();
     }
 
-    private static String getLanguage(){
-        return config.getString("language");
+    public static Language getLanguage(){
+        return Language.fromCode(config.getString("language"));
     }
 
     private static void setupLocale(){
-        String langCode = getLanguage();
+        Language language = getLanguage();
         File localeFile = getLocaleFile();
+
         if(localeFile.exists()){
             loadLocale();
             int version = locale.getInt("version");
-            int latest = getLatestLocaleVersion(langCode);
+            int latest = getLatestLocaleVersion(language.getCode());
 
             if(latest != version){//upgrade locale
                 backupLocale(localeFile);
             } else return; //locale is up to date
         }
 
-        if(!ArrayUtils.contains(LANGUAGES, langCode)){
-            Messenger.sendConsoleMessage("Invalid language code in config.yml! Loading up english locale");
-            langCode = "enGB";
-        }
-        saveLanguageFile(langCode);
+        saveLanguageFile(language.getCode());
         loadLocale();
     }
 

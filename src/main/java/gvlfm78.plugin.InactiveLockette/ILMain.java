@@ -50,6 +50,7 @@ public class ILMain extends JavaPlugin {
 
         //bStats
         Metrics metrics = new Metrics(this);
+        metrics.addCustomChart(new Metrics.SimplePie("locale_language", () -> ILConfigHandler.getLanguage().getHumanReadableName()));
 
         //Checking for updates
         if(getConfig().getBoolean("checkForUpdates", true)){

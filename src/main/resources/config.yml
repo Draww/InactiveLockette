@@ -1,14 +1,14 @@
 # InactiveLockette Plugin by gvlfm78
 # Bukkit Page: http://dev.bukkit.org/bukkit-plugins/inactive-lockette
 # Spigot Page: https://www.spigotmc.org/resources/inactive-lockette.25644
-# GitHub Page: https://github.com/gvlfm78/InactiveLockette
+# GitLab Page: https://gitlab.com/gvlfm78/InactiveLockette
 
 # Language for the locale file - you must delete the locale and then
 # do /il reload for them to be re-created with the language set here
-# If you wish to contribute translations take the locale file, edit the
-# strings and send them over to me. I'll put them in the next version.
+# If you wish to contribute translations go here for instructions:
+# https://gitlab.com/gvlfm78/InactiveLockette/wikis/Translations
 # Currently available languages: enGB, itIT, frFR
-language: enGB
+language: auto
 
 # After how many days the lock should be openable
 # You can set this to -1 if you want the locks to always be openable
