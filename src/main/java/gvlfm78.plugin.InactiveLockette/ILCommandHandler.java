@@ -32,9 +32,9 @@ public class ILCommandHandler implements CommandExecutor {
 
     private void onDefault(CommandSender sender){
         Messenger.sendPlayerMessage(sender,"&6== &2InactiveLockette plugin by gvlfm78 v" + ILMain.getDescriptionFile().getVersion() + "&6 ==");
-        Messenger.sendPlayerMessage(sender, "&6== " + "&2Bukkit: " + "&6http://dev.bukkit.org/bukkit-plugins/inactive-lockette");
-        Messenger.sendPlayerMessage(sender, "&6== " + "&2Spigot: " + "&6https://www.spigotmc.org/resources/inactive-lockette.25644");
-        Messenger.sendPlayerMessage(sender, "&6== " + "&2GitLab: " + "&6https://gitlab.com/gvlfm78/InactiveLockette");
+        Messenger.sendPlayerMessage(sender, "&2Bukkit: " + "&6http://dev.bukkit.org/bukkit-plugins/inactive-lockette");
+        Messenger.sendPlayerMessage(sender, "&2Spigot: " + "&6https://www.spigotmc.org/resources/inactive-lockette.25644");
+        Messenger.sendPlayerMessage(sender, "&2GitLab: " + "&6https://gitlab.com/gvlfm78/InactiveLockette");
 
         Messenger.sendPlayerMessage(sender, "&6== " + "&2/il help " + "&6Displays help page" + "&6 ==");
         Messenger.sendPlayerMessage(sender, "&6== " + "&2/il reload " + "&6Reloads config file" + "&6 ==");

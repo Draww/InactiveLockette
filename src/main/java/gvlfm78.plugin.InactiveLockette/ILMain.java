@@ -53,9 +53,8 @@ public class ILMain extends JavaPlugin {
         metrics.addCustomChart(new Metrics.SimplePie("locale_language", () -> ILConfigHandler.getLanguage().getHumanReadableName()));
 
         //Checking for updates
-        if(getConfig().getBoolean("checkForUpdates", true)){
+        if(!getConfig().getString("updates").equalsIgnoreCase("false"))
             getServer().getPluginManager().registerEvents((new ILUpdateListener(this, this.getFile())), this);
-        }
     }
 
 

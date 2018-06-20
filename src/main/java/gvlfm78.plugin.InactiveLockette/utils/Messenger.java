@@ -52,7 +52,7 @@ public class Messenger {
     }
 
     public static String getLocalisedMessage(String path, String... replacements){
-        return performReplacements(locale.getString(path), replacements);
+        return colourise(performReplacements(locale.getString(path), replacements));
     }
 
     private static String performReplacements(String message, String[] replacements){

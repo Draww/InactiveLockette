@@ -1,14 +1,14 @@
 # InactiveLockette plugin di gvlfm78
 # Traduzione in italiano di gvlfm78
 # Help with translations: https://gitlab.com/gvlfm78/InactiveLockette/wikis/Translations
-version: 2
+version: 3
 
 settingsChat:
   firstLine: 'Privato'
   prefix: '&9[InactiveLockette]'
-onPluginLoad:
-  updateAvailable: '&9Una nuova versione è disponibile:'
-  updateAvailableLink: '&9Prendila qui: &7'
+updates:
+  updateAvailable: '&9InactiveLockette v%version% è disponibile'
+  updateAvailableLink: '&9Prendila qui: &7%link%'
   failedUpdateCheck: 'Qualcosa è andato storto durante la ricerca di aggiornamenti'
 onCommand:
   reloadConfig: '&aFile di configurazione ricaricati'

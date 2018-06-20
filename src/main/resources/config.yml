@@ -55,12 +55,16 @@ list: []
 # keeping the same order on the sign
 onlyCheckFirstName: false
 
-# If the plugin should check for updates
-checkForUpdates: true
+# If and how the plugin should check for updates:
+# auto: automatically choose between Bukkit & Spigot depending on server version
+# bukkit: use Bukkit update checker
+# spigot: use Spigot update checker
+# off: turns update checking off
+updates: auto
 
 ###########################################################
 #####################OTHER SETTINGS########################
 ## DO NOT CHANGE THIS UNLESS YOU KNOW WHAT YOU'RE DOING ###
 ## IF IN DOUBT, NO, YOU DON'T KNOW WHAT YOU'RE DOING ######
 ###########################################################
-config-version: 4
+config-version: 5

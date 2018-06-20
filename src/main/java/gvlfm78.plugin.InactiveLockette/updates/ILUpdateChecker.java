@@ -30,18 +30,18 @@ class ILUpdateChecker {
         if(useSpigot){
             final SpigotUpdateChecker SUC = new SpigotUpdateChecker();
             if(SUC.getNewUpdateAvailable()){
-                updateMessages[0] = Messenger.getLocalisedMessage("main.updateAvailable","%version%", SUC.getLatestVersion());
-                updateMessages[1] = Messenger.getLocalisedMessage("main.updateAvailableLink","%link%", SUC.getUpdateURL());
+                updateMessages[0] = Messenger.getLocalisedMessage("updates.updateAvailable","%version%", SUC.getLatestVersion());
+                updateMessages[1] = Messenger.getLocalisedMessage("updates.updateAvailableLink","%link%", SUC.getUpdateURL());
             }
         }
         else{//Get messages from bukkit update checker
-            Updater updater = new Updater(plugin, 70177, pluginFile, Updater.UpdateType.NO_DOWNLOAD, false);
+            Updater updater = new Updater(plugin, 52457, pluginFile, Updater.UpdateType.NO_DOWNLOAD, false);
             if(updater.getResult().equals(Updater.UpdateResult.UPDATE_AVAILABLE)){
                 //Updater knows local and remote versions are different, but not if it's an update
                 String remoteVersion = updater.getLatestName().replaceAll("[A-Za-z\\s]", "");
                 if(shouldUpdate(remoteVersion)){
-                    updateMessages[0] = Messenger.getLocalisedMessage("main.updateAvailable","%version%", remoteVersion);
-                    updateMessages[1] = Messenger.getLocalisedMessage("main.updateAvailableLink","%link%",updater.getLatestFileLink());
+                    updateMessages[0] = Messenger.getLocalisedMessage("updates.updateAvailable","%version%", remoteVersion);
+                    updateMessages[1] = Messenger.getLocalisedMessage("updates.updateAvailableLink","%link%", updater.getLatestFileLink());
                 }
             }
         }

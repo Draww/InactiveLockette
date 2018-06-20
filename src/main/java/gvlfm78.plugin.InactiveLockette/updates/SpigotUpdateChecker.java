@@ -32,7 +32,7 @@ class SpigotUpdateChecker {
         try {
             JSONArray updatesArray = getArray(UPDATES_URL);
             String updateId = ((JSONObject) updatesArray.get(updatesArray.size() - 1)).get("id").toString();
-            return "https://www.spigotmc.org/resources/hotels.2047/update?update=" + updateId;
+            return "https://www.spigotmc.org/resources/inactive-lockette.25644/update?update=" + updateId;
         }
         catch (Exception e){
             return "Error getting update URL";
