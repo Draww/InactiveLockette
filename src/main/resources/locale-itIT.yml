@@ -1,5 +1,6 @@
 # InactiveLockette plugin di gvlfm78
 # Traduzione in italiano di gvlfm78
+# Help with translations: https://gitlab.com/gvlfm78/InactiveLockette/wikis/Translations
 version: 2
 
 settingsChat:
@@ -13,8 +14,8 @@ onCommand:
   reloadConfig: '&aFile di configurazione ricaricati'
   noPermission: '&4Non hai il permesso di usare quel comando'
 onPunch:
-  active: '&cIl propietario di questo blocco è ancora attivo'
-  inactive: '&cIl propietario di questo blocco è stato inattivo per %inactivedays% giorni'
+  active: '&cIl proprietario di questo blocco è ancora attivo'
+  inactive: '&cIl proprietario di questo blocco è stato inattivo per %inactivedays% giorni'
   daysToWait: '&cDevi aspettare altri %daystowait% giorni per aprire questo blocco'
   noPermission: '&4Non hai il permesso di aprire questo blocco'
 onUnlock:

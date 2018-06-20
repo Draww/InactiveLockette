@@ -22,26 +22,19 @@ public class ILCommandHandler implements CommandExecutor {
         }
 
         switch(args[0].toLowerCase()){
-            case "help":
-                onHelp(sender);
-                break;
-            case "version":
-                onVersion(sender);
-                break;
-            case "reload":
-                onReload(sender);
-                break;
-            default:
-                onDefault(sender);
+            case "help": onHelp(sender); break;
+            case "version": onVersion(sender); break;
+            case "reload": onReload(sender); break;
+            default: onDefault(sender);
         }
         return false;
     }
 
     private void onDefault(CommandSender sender){
         Messenger.sendPlayerMessage(sender,"&6== &2InactiveLockette plugin by gvlfm78 v" + ILMain.getDescriptionFile().getVersion() + "&6 ==");
-        Messenger.sendPlayerMessage(sender, "&6== " + "&2Bukkit: " + "&6http://dev.bukkit.org/bukkit-plugins/inactive-lockette ==");
-        Messenger.sendPlayerMessage(sender, "&6== " + "&2Spigot: " + "&6https://www.spigotmc.org/resources/inactive-lockette.25644 ==");
-        Messenger.sendPlayerMessage(sender, "&6== " + "&2GitHub: " + "&6https://github.com/gvlfm78/InactiveLockette ==");
+        Messenger.sendPlayerMessage(sender, "&6== " + "&2Bukkit: " + "&6http://dev.bukkit.org/bukkit-plugins/inactive-lockette");
+        Messenger.sendPlayerMessage(sender, "&6== " + "&2Spigot: " + "&6https://www.spigotmc.org/resources/inactive-lockette.25644");
+        Messenger.sendPlayerMessage(sender, "&6== " + "&2GitLab: " + "&6https://gitlab.com/gvlfm78/InactiveLockette");
 
         Messenger.sendPlayerMessage(sender, "&6== " + "&2/il help " + "&6Displays help page" + "&6 ==");
         Messenger.sendPlayerMessage(sender, "&6== " + "&2/il reload " + "&6Reloads config file" + "&6 ==");
